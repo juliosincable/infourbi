@@ -1,6 +1,7 @@
-/* For information on how to create your own theme, please see:
-http://ionicframework.com/docs/theming/ */
+/* variables.css - Estilos globales */
+/* Manteniendo estilos existentes y agregando nuevos */
 
+/* Estilos existentes */
 #container {
   text-align: center;
   position: absolute;
@@ -24,4 +25,80 @@ http://ionicframework.com/docs/theming/ */
 
 #container a {
   text-decoration: none;
+}
+
+/* Nuevos estilos para el componente ExploreContainer */
+.main-square {
+  background: #7ad6dd;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 40px 20px 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+  
+  /* Mobile-first dimensions */
+  width: calc(100% - 40px);
+  height: calc(100% - 40px);
+  margin: 20px;
+}
+
+.title-text {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: bold;
+  font-family: 'Arial', sans-serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.info-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1.2rem;
+  font-family: 'Arial', sans-serif;
+  margin: 10px 0;
+  cursor: pointer;
+  border-radius: 25px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.info-button:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.info-button:active {
+  transform: translateY(1px);
+}
+
+/* Desktop/Tablet styles */
+@media (min-width: 768px) {
+  .main-square {
+    width: 600px;
+    height: 400px;
+    margin: 20px auto;
+    padding-top: 60px;
+  }
+
+  .title-text {
+    font-size: 3.5rem;
+    margin-bottom: 40px;
+  }
+
+  .info-button {
+    padding: 15px 40px;
+    font-size: 1.4rem;
+  }
 }
