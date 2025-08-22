@@ -1,0 +1,257 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Negocio,
+  addNegocio,
+  updateDocument,
+  deleteDocument,
+  getDocuments,
+  negociosCollection,
+} from '../service/database';
+
+const PROPIETARIO_ID_EJEMPLO = "propietario-123";
+
+const Prueba: React.FC = () => {
+  const [negocios, setNegocios] = useState<Negocio[]>([]);
+  const [nombreNegocio, setNombreNegocio] = useState('');
+  const [negocioSeleccionado, setNegocioSeleccionado] = useState<Negocio | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchNegocios();
+  }, []);
+
+  const fetchNegocios = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data } = await getDocuments(negociosCollection);
+      setNegocios(data);
+    } catch (err) {
+      console.error(err);
+      setError('Error al cargar la lista de negocios.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!nombreNegocio.trim()) {
+      alert('El nombre del negocio no puede estar vacío.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      if (negocioSeleccionado) {
+        if (negocioSeleccionado.id) {
+          await updateDocument(negociosCollection, negocioSeleccionado.id, { nombre: nombreNegocio });
+          setNegocioSeleccionado(null);
+          alert('Negocio actualizado con éxito.');
+        }
+      } else {
+        await addNegocio({ nombre: nombreNegocio, propietario_id: PROPIETARIO_ID_EJEMPLO });
+        alert('Negocio agregado con éxito.');
+      }
+      setNombreNegocio('');
+      fetchNegocios();
+    } catch (err) {
+      console.error(err);
+      setError('No se pudo guardar el negocio.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectNegocio = (negocio: Negocio) => {
+    setNegocioSeleccionado(negocio);
+    setNombreNegocio(negocio.nombre);
+  };
+
+  const handleDeleteNegocio = async (id: string | undefined) => {
+    if (!id || !window.confirm('¿Estás seguro de que quieres eliminar este negocio?')) {
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await deleteDocument(negociosCollection, id);
+      alert('Negocio eliminado con éxito.');
+      fetchNegocios();
+    } catch (err) {
+      console.error(err);
+      setError('No se pudo eliminar el negocio.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setNegocioSeleccionado(null);
+    setNombreNegocio('');
+  };
+
+  const handleSearchNegocio = async () => {
+    if (!nombreNegocio.trim()) {
+      alert('Por favor, ingresa un nombre para buscar.');
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data } = await getDocuments(negociosCollection, {
+        pageSize: 99999,
+        orderByField: 'nombre',
+      });
+      const resultados = data.filter(negocio =>
+        negocio.nombre.toLowerCase().includes(nombreNegocio.toLowerCase())
+      );
+      setNegocios(resultados);
+    } catch (err) {
+      console.error(err);
+      setError('No se pudo realizar la búsqueda.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' }}>
+      <h1>Gestión de Negocios</h1>
+
+      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
+        <h2>{negocioSeleccionado ? 'Editar Negocio' : 'Agregar Nuevo Negocio'}</h2>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={nombreNegocio}
+            onChange={(e) => setNombreNegocio(e.target.value)}
+            placeholder="Nombre del negocio"
+            style={{ width: '100%', padding: '10px', marginBottom: '10px', boxSizing: 'border-box' }}
+            disabled={isLoading}
+          />
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="submit"
+              style={{
+                padding: '10px 15px',
+                backgroundColor: negocioSeleccionado ? '#f39c12' : '#2ecc71',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+              disabled={isLoading}
+            >
+              {negocioSeleccionado ? 'Guardar Cambios' : 'Agregar Negocio'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSearchNegocio}
+              style={{
+                padding: '10px 15px',
+                backgroundColor: '#3498db',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+              disabled={isLoading}
+            >
+              Buscar
+            </button>
+            {negocioSeleccionado && (
+              <button
+                type="button"
+                onClick={handleClearSelection}
+                style={{
+                  padding: '10px 15px',
+                  backgroundColor: '#95a5a6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+                disabled={isLoading}
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      {isLoading && <p>Cargando...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      <h2>Lista de Negocios ({negocios.length})</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {negocios.length > 0 ? (
+          negocios.map((negocio) => (
+            <div
+              key={negocio.id}
+              style={{
+                border: '1px solid #ddd',
+                padding: '15px',
+                borderRadius: '8px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: negocioSeleccionado?.id === negocio.id ? '#ecf0f1' : 'white',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+            >
+              <div>
+                <p style={{ margin: 0, fontWeight: 'bold' }}>{negocio.nombre}</p>
+                <p style={{ margin: 0, fontSize: '0.9em', color: '#666' }}>ID: {negocio.id}</p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => handleSelectNegocio(negocio)}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                  disabled={isLoading}
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDeleteNegocio(negocio.id)}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#e74c3c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                  disabled={isLoading}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p>No se encontraron negocios.</p>
+        )}
+      </div>
+
+      {negocioSeleccionado && (
+        <div style={{ marginTop: '20px', border: '1px solid #3498db', padding: '20px', borderRadius: '8px' }}>
+          <h2>Detalles del Negocio</h2>
+          <p><strong>ID:</strong> {negocioSeleccionado.id}</p>
+          <p><strong>Nombre:</strong> {negocioSeleccionado.nombre}</p>
+          <p><strong>ID Propietario:</strong> {negocioSeleccionado.propietario_id}</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Prueba;
