@@ -4,7 +4,7 @@ import { IonReactRouter } from '@ionic/react-router';
 
 // Importa los componentes de las páginas
 import Home from './pages/Home';
-import Prueba from './pages/Prueba'; // <-- Importa el componente Prueba
+import Prueba from './pages/Prueba';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -43,15 +43,11 @@ const App: React.FC = () => (
     <IonReactRouter>
       <IonRouterOutlet>
         {/* Ruta para la página principal Home */}
-        <Route exact path="/home">
-          <Home />
-        </Route>
-        
-        {/* Nueva ruta para el componente de prueba de CRUD */}
-        <Route exact path="/prueba">
-          <Prueba />
-        </Route>
+        <Route exact path="/home" component={Home} />
 
+        {/* Nueva ruta para la página de prueba */}
+        <Route exact path="/prueba" component={Prueba} />
+        
         {/* Redirecciona la ruta raíz a la página principal */}
         <Route exact path="/">
           <Redirect to="/home" />
