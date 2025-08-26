@@ -1,10 +1,7 @@
+import { setupIonicReact } from '@ionic/react';
 import { Redirect, Route } from 'react-router-dom';
-import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
+import { IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-
-// Importa los componentes de las páginas
-import Home from './pages/Home';
-import Prueba from './pages/Prueba';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -22,39 +19,32 @@ import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
-
 /* Theme variables */
 import './theme/variables.css';
 
+/* Importa tus páginas aquí */
+import Home from './pages/Home';
+import Prueba from './pages/Prueba';
+// Se eliminó la importación del componente Menu que causaba el error
+
+// Configura Ionic React
 setupIonicReact();
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        {/* Ruta para la página principal Home */}
-        <Route exact path="/home" component={Home} />
-
-        {/* Nueva ruta para la página de prueba */}
-        <Route exact path="/prueba" component={Prueba} />
-        
-        {/* Redirecciona la ruta raíz a la página principal */}
-        <Route exact path="/">
-          <Redirect to="/home" />
-        </Route>
-      </IonRouterOutlet>
-    </IonReactRouter>
-  </IonApp>
-);
+const App: React.FC = () => {
+  return (
+    <IonApp className="ion-app-light">
+      <IonReactRouter>
+        <IonSplitPane contentId="main">
+          {/* Si tienes un componente Menu, asegúrate de importarlo en esta ubicación o eliminar este componente. */}
+          <IonRouterOutlet id="main">
+            <Route path="/home" component={Home} exact={true} />
+            <Route path="/prueba" component={Prueba} exact={true} />
+            <Route exact path="/" render={() => <Redirect to="/home" />} />
+          </IonRouterOutlet>
+        </IonSplitPane>
+      </IonReactRouter>
+    </IonApp>
+  );
+};
 
 export default App;
