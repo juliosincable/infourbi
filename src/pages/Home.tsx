@@ -1,44 +1,45 @@
+import React from "react";
 import {
+  IonButton,
   IonContent,
   IonHeader,
   IonPage,
   IonTitle,
   IonToolbar,
-  IonButtons, // Importa IonButtons
-  IonButton // Importa IonButton
-} from '@ionic/react';
-import ExploreContainer from '../components/ExploreContainer';
-import { useHistory } from 'react-router-dom'; // Importa el hook useHistory
+  IonButtons,
+} from "@ionic/react";
+import { useHistory } from "react-router-dom";
+import "../theme/variables.css";
 
-const Home: React.FC = () => {
-  const history = useHistory(); // Inicializa el hook de historial
+const Home = () => {
+  const history = useHistory();
 
-  // Función para navegar a la página de prueba
   const goToPrueba = () => {
-    history.push('/prueba');
+    history.push("/prueba");
   };
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>infourbi</IonTitle>
-          {/* Contenedor para los botones al final (derecha) del toolbar */}
+          <IonTitle>infourbis</IonTitle>
           <IonButtons slot="end">
-            {/* Botón que al ser clickeado llama a la función de navegación */}
-            <IonButton onClick={goToPrueba}>
-              Prueba
-            </IonButton>
+            <IonButton onClick={goToPrueba}>Prueba</IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Blank</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <ExploreContainer />
+      <IonContent fullscreen className="ion-padding">
+        <div className="home-container">
+          <div className="search-container">
+            <div className="search-bar">
+              <label htmlFor="nombre-usuario">Buscar:</label>
+              <input type="text" id="nombre-usuario" placeholder="ej. Juan Perez" />
+            </div>
+            <IonButton expand="block" color="primary">
+              Buscar
+            </IonButton>
+          </div>
+        </div>
       </IonContent>
     </IonPage>
   );

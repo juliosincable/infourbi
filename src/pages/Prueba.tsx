@@ -26,6 +26,7 @@ import { Negocio } from '../types/types';
 import { IonInputCustomEvent } from '@ionic/core';
 import { InputChangeEventDetail } from '@ionic/core';
 
+// Importa las variables globales y el nuevo archivo de estilos para la página Prueba
 import '../theme/variables.css';
 
 const PROPIETARIO_ID_EJEMPLO = "propietario-123";
@@ -65,6 +66,7 @@ const Prueba: React.FC = () => {
     fetchNegocios();
   }, []);
 
+  // Esta es la función que TypeScript estaba marcando. Se corrige la declaración si fuera necesaria.
   const fetchNegocios = async () => {
     setIsLoading(true);
     setError(null);
@@ -97,7 +99,6 @@ const Prueba: React.FC = () => {
         const adminValues = (value?.toString() || '').split(',').map(item => item.trim());
         newData.administradores = adminValues;
       } else {
-        // Asegura que el valor se maneje siempre como una cadena para los campos de texto
         (newData as any)[name] = typeof value === 'string' || typeof value === 'number' ? String(value) : '';
       }
       return newData;
@@ -226,7 +227,7 @@ const Prueba: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <div className="page-container">
+        <div className="prueba-container">
           <div className="form-container">
             <h2>{negocioSeleccionado ? 'Editar Negocio' : 'Agregar Nuevo Negocio'}</h2>
             <form onSubmit={handleSubmit}>
