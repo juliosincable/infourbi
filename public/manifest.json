@@ -1,21 +1,35 @@
 {
-  "short_name": "INFOURBI",
-  "name": "INFOURBI",
+  "short_name": "infourbi",
+  "name": "infourbi",
   "icons": [
     {
-      "src": "assets/icon/favicon.png",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
     },
     {
-      "src": "assets/icon/icon.png",
+      "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#ffffff",
-  "background_color": "#ffffff"
+  "background_color": "#ffffff",
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-screenshot.jpg",
+      "sizes": "1080x2063",
+      "type": "image/jpg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/desktop-screenshot.png",
+      "sizes": "1280x1024",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
 }

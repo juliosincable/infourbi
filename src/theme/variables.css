@@ -65,6 +65,11 @@
 
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   --box-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.15);
+
+  /* Estilos agregados para el nuevo panel de control CRUD */
+  --ion-background-color: #f4f5f8;
+  --ion-color-step-600: #666666;
+  --ion-color-step-900: #111111;
 }
 
 /* Estilos para el diseño general de la página. */
@@ -137,7 +142,8 @@
 }
 
 /* Grupos de botones en el formulario */
-.button-group {
+.button-group,
+.button-group-details {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -187,6 +193,23 @@
   width: 100%;
 }
 
+/* Nuevos estilos específicos para las vistas del panel de control */
+.list-view-container, .form-view-container, .details-view-container {
+  padding: 20px;
+}
+
+.error-message {
+  color: var(--ion-color-danger);
+  text-align: center;
+  margin-top: 15px;
+}
+
+.success-message {
+  color: var(--ion-color-success);
+  text-align: center;
+  margin-top: 15px;
+}
+
 /* Media Query para pantallas de escritorio (>= 768px). */
 @media (min-width: 768px) {
   .page-container, .home-container, .prueba-container {
@@ -201,7 +224,7 @@
   }
 
   /* Los grupos de botones se vuelven horizontales */
-  .button-group {
+  .button-group, .button-group-details {
     flex-direction: row;
     justify-content: flex-end;
   }

@@ -13,6 +13,7 @@ import {
   IonItem,
   IonLabel,
   IonInput,
+  IonList,
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import {
@@ -23,10 +24,7 @@ import {
   negociosCollection,
 } from '../service/database';
 import { Negocio } from '../types/types';
-import { IonInputCustomEvent } from '@ionic/core';
-import { InputChangeEventDetail } from '@ionic/core';
-
-// Importa las variables globales y el nuevo archivo de estilos para la página Prueba
+import { IonInputCustomEvent, InputChangeEventDetail } from '@ionic/core';
 import '../theme/variables.css';
 
 const PROPIETARIO_ID_EJEMPLO = "propietario-123";
@@ -50,6 +48,8 @@ const initialState: Omit<Negocio, 'id'> = {
   categoria: '',
 };
 
+type ViewMode = 'list' | 'create' | 'details';
+
 const Prueba: React.FC = () => {
   const history = useHistory();
   const [negocios, setNegocios] = useState<Negocio[]>([]);
@@ -61,12 +61,12 @@ const Prueba: React.FC = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [negocioToDelete, setNegocioToDelete] = useState<string | undefined>(undefined);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   useEffect(() => {
     fetchNegocios();
   }, []);
 
-  // Esta es la función que TypeScript estaba marcando. Se corrige la declaración si fuera necesaria.
   const fetchNegocios = async () => {
     setIsLoading(true);
     setError(null);
@@ -84,10 +84,9 @@ const Prueba: React.FC = () => {
   const handleInputChange = (e: IonInputCustomEvent<InputChangeEventDetail>) => {
     const { name, value } = e.target;
     if (!name) return;
-  
+    
     setNegocioData(prevData => {
       const newData = { ...prevData };
-  
       if (name.startsWith('coordenadas.')) {
         const coordName = name.split('.')[1] as 'lat' | 'lng';
         const parsedValue = parseFloat(value?.toString() || '');
@@ -117,15 +116,14 @@ const Prueba: React.FC = () => {
       if (negocioSeleccionado) {
         if (negocioSeleccionado.id) {
           await updateDocument(negociosCollection, negocioSeleccionado.id, negocioData);
-          setNegocioSeleccionado(null);
           setMessage('Negocio actualizado con éxito.');
         }
       } else {
-        await addDocument(negociosCollection, negocioData);
+        const newDocId = await addDocument(negociosCollection, negocioData);
         setMessage('Negocio agregado con éxito.');
+        setNegocios(prevNegocios => [...prevNegocios, { id: newDocId, ...negocioData }]);
       }
-      setNegocioData(initialState);
-      fetchNegocios();
+      handleClearSelection();
     } catch (err) {
       console.error(err);
       setError('No se pudo guardar el negocio.');
@@ -134,7 +132,7 @@ const Prueba: React.FC = () => {
     }
   };
 
-  const handleSelectNegocio = (negocio: Negocio) => {
+  const handleViewNegocio = (negocio: Negocio) => {
     setNegocioSeleccionado(negocio);
     setNegocioData({
       nombre: negocio.nombre || '',
@@ -151,12 +149,17 @@ const Prueba: React.FC = () => {
       logo: negocio.logo || '',
       categoria: negocio.categoria || '',
     });
+    setViewMode('details');
+  };
+
+  const handleEditNegocio = () => {
+    setViewMode('create');
   };
 
   const handleDeleteNegocio = (id: string | undefined) => {
     if (id) {
       setNegocioToDelete(id);
-      setAlertMessage('¿Estás seguro de que quieres eliminar este negocio?');
+      setAlertMessage('¿Estás seguro de que quieres eliminar este negocio? Esta acción es irreversible.');
       setShowAlert(true);
     }
   };
@@ -167,7 +170,8 @@ const Prueba: React.FC = () => {
       setIsLoading(true);
       await deleteDocument(negociosCollection, negocioToDelete);
       setMessage('Negocio eliminado con éxito.');
-      fetchNegocios();
+      setNegocios(prevNegocios => prevNegocios.filter(neg => neg.id !== negocioToDelete));
+      setViewMode('list');
     } catch (err) {
       console.error(err);
       setError('No se pudo eliminar el negocio.');
@@ -177,38 +181,118 @@ const Prueba: React.FC = () => {
     }
   };
 
+  const handleBackToList = () => {
+    setViewMode('list');
+    handleClearSelection();
+  };
+
+  const handleAddNegocio = () => {
+    handleClearSelection();
+    setViewMode('create');
+  };
+
   const handleClearSelection = () => {
     setNegocioSeleccionado(null);
     setNegocioData(initialState);
   };
 
-  const handleSearchNegocio = async () => {
-    if (!negocioData.nombre.trim()) {
-      setMessage('Por favor, ingresa un nombre para buscar.');
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { data } = await getDocuments<Negocio>(negociosCollection, {
-        pageSize: 99999,
-        orderByField: 'nombre',
-      });
-      const resultados = data.filter(negocio =>
-        negocio.nombre.toLowerCase().includes(negocioData.nombre.toLowerCase())
-      );
-      setNegocios(resultados);
-      setMessage(`Se encontraron ${resultados.length} negocios.`);
-    } catch (err) {
-      console.error(err);
-      setError('No se pudo realizar la búsqueda.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const renderNegociosList = () => (
+    <div className="list-view-container">
+      <h2>Lista de Negocios ({negocios.length})</h2>
+      <IonButton expand="block" onClick={handleAddNegocio}>Agregar Nuevo Negocio</IonButton>
+      <IonList>
+        {negocios.length > 0 ? (
+          negocios.map((negocio) => (
+            <IonItem key={negocio.id} onClick={() => handleViewNegocio(negocio)}>
+              <IonLabel>{negocio.nombre}</IonLabel>
+              <IonButton slot="end" onClick={(e) => { e.stopPropagation(); handleViewNegocio(negocio); }}>Ver</IonButton>
+            </IonItem>
+          ))
+        ) : (
+          <IonItem>
+            <IonLabel>No se encontraron negocios.</IonLabel>
+          </IonItem>
+        )}
+      </IonList>
+    </div>
+  );
 
-  const goToHome = () => {
-    history.push('/home');
+  const renderNegocioForm = () => (
+    <div className="form-view-container">
+      <h2>{negocioSeleccionado ? 'Editar Negocio' : 'Agregar Nuevo Negocio'}</h2>
+      <form onSubmit={handleSubmit}>
+        <IonItem>
+          <IonLabel position="floating">Nombre del negocio</IonLabel>
+          <IonInput name="nombre" value={negocioData.nombre} onIonChange={handleInputChange} disabled={isLoading} />
+        </IonItem>
+        <IonItem>
+          <IonLabel position="floating">WhatsApp</IonLabel>
+          <IonInput name="whatsapp" value={negocioData.whatsapp} onIonChange={handleInputChange} disabled={isLoading} />
+        </IonItem>
+        <IonItem>
+          <IonLabel position="floating">Dirección</IonLabel>
+          <IonInput name="direccion" value={negocioData.direccion} onIonChange={handleInputChange} disabled={isLoading} />
+        </IonItem>
+        <IonItem>
+          <IonLabel position="floating">Categoría</IonLabel>
+          <IonInput name="categoria" value={negocioData.categoria} onIonChange={handleInputChange} disabled={isLoading} />
+        </IonItem>
+        {/* Aquí puedes agregar más campos según tu tipo Negocio */}
+        
+        <div className="button-group">
+          <IonButton type="submit" expand="block" color="primary" disabled={isLoading}>
+            {negocioSeleccionado ? 'Guardar Cambios' : 'Crear Negocio'}
+          </IonButton>
+          <IonButton type="button" onClick={handleBackToList} expand="block" color="medium" disabled={isLoading}>
+            Volver
+          </IonButton>
+        </div>
+      </form>
+    </div>
+  );
+
+  const renderNegocioDetails = () => (
+    <div className="details-view-container">
+      <h2>{negocioSeleccionado?.nombre}</h2>
+      <p><strong>WhatsApp:</strong> {negocioSeleccionado?.whatsapp || 'N/A'}</p>
+      <p><strong>Dirección:</strong> {negocioSeleccionado?.direccion || 'N/A'}</p>
+      <p><strong>Categoría:</strong> {negocioSeleccionado?.categoria || 'N/A'}</p>
+      <p><strong>ID:</strong> {negocioSeleccionado?.id}</p>
+      {/* Muestra el resto de los campos aquí */}
+      <p><strong>Coordenadas:</strong> Latitud: {negocioSeleccionado?.coordenadas?.lat || 'N/A'}, Longitud: {negocioSeleccionado?.coordenadas?.lng || 'N/A'}</p>
+      <p><strong>Instagram:</strong> {negocioSeleccionado?.instagram || 'N/A'}</p>
+      <p><strong>TikTok:</strong> {negocioSeleccionado?.tiktok || 'N/A'}</p>
+      <p><strong>Web:</strong> {negocioSeleccionado?.web || 'N/A'}</p>
+      <p><strong>Administradores:</strong> {(negocioSeleccionado?.administradores || []).join(', ') || 'N/A'}</p>
+      <p><strong>Foto:</strong> <a href={negocioSeleccionado?.foto || '#'} target="_blank" rel="noopener noreferrer">Ver Foto</a></p>
+      <p><strong>Logo:</strong> <a href={negocioSeleccionado?.logo || '#'} target="_blank" rel="noopener noreferrer">Ver Logo</a></p>
+      <p><strong>Código QR:</strong> <a href={negocioSeleccionado?.codigoQr || '#'} target="_blank" rel="noopener noreferrer">Ver Código QR</a></p>
+
+      <div className="button-group-details">
+        <IonButton onClick={handleEditNegocio} color="primary" disabled={isLoading}>
+          Editar
+        </IonButton>
+        <IonButton onClick={() => handleDeleteNegocio(negocioSeleccionado?.id)} color="danger" disabled={isLoading}>
+          Eliminar
+        </IonButton>
+        <IonButton onClick={handleBackToList} color="medium" disabled={isLoading}>
+          Volver
+        </IonButton>
+      </div>
+    </div>
+  );
+
+  const renderContent = () => {
+    switch (viewMode) {
+      case 'list':
+        return renderNegociosList();
+      case 'create':
+        return renderNegocioForm();
+      case 'details':
+        return renderNegocioDetails();
+      default:
+        return null;
+    }
   };
 
   return (
@@ -220,143 +304,18 @@ const Prueba: React.FC = () => {
           </IonButtons>
           <IonTitle>Gestión de Negocios</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={goToHome}>
-              Inicio
+            <IonButton onClick={handleBackToList}>
+              {viewMode === 'list' ? 'Inicio' : 'Volver'}
             </IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
         <div className="prueba-container">
-          <div className="form-container">
-            <h2>{negocioSeleccionado ? 'Editar Negocio' : 'Agregar Nuevo Negocio'}</h2>
-            <form onSubmit={handleSubmit}>
-              <IonItem>
-                <IonLabel position="floating">Nombre del negocio</IonLabel>
-                <IonInput name="nombre" value={negocioData.nombre} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">WhatsApp</IonLabel>
-                <IonInput name="whatsapp" value={negocioData.whatsapp} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">Instagram (opcional)</IonLabel>
-                <IonInput name="instagram" value={negocioData.instagram} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">Dirección</IonLabel>
-                <IonInput name="direccion" value={negocioData.direccion} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">TikTok (opcional)</IonLabel>
-                <IonInput name="tiktok" value={negocioData.tiktok} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">Web (opcional)</IonLabel>
-                <IonInput name="web" value={negocioData.web} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">URL de la Foto</IonLabel>
-                <IonInput name="foto" value={negocioData.foto} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">URL del Código QR</IonLabel>
-                <IonInput name="codigoQr" value={negocioData.codigoQr} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">URL del Logo</IonLabel>
-                <IonInput name="logo" value={negocioData.logo} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">Categoría</IonLabel>
-                <IonInput name="categoria" value={negocioData.categoria} onIonChange={handleInputChange} disabled={isLoading} />
-              </IonItem>
-              <IonItem>
-                <IonLabel position="floating">Administradores (separar por comas)</IonLabel>
-                <IonInput
-                  name="administradores"
-                  value={negocioData.administradores?.join(', ') || ''}
-                  onIonChange={handleInputChange}
-                  disabled={isLoading}
-                />
-              </IonItem>
-              
-              <div className="form-group-inline">
-                <IonItem>
-                  <IonLabel position="floating">Latitud</IonLabel>
-                  <IonInput
-                    name="coordenadas.lat"
-                    value={negocioData.coordenadas?.lat}
-                    onIonChange={handleInputChange}
-                    disabled={isLoading}
-                  />
-                </IonItem>
-                <IonItem>
-                  <IonLabel position="floating">Longitud</IonLabel>
-                  <IonInput
-                    name="coordenadas.lng"
-                    value={negocioData.coordenadas?.lng}
-                    onIonChange={handleInputChange}
-                    disabled={isLoading}
-                  />
-                </IonItem>
-              </div>
-
-              <div className="button-group">
-                <IonButton type="submit" expand="block" color={negocioSeleccionado ? "primary" : "secondary"}>
-                  {negocioSeleccionado ? 'Guardar Cambios' : 'Agregar Negocio'}
-                </IonButton>
-                <IonButton type="button" onClick={handleSearchNegocio} expand="block" color="tertiary">
-                  Buscar
-                </IonButton>
-                {negocioSeleccionado && (
-                  <IonButton type="button" onClick={handleClearSelection} expand="block" color="danger">
-                    Cancelar
-                  </IonButton>
-                )}
-              </div>
-            </form>
-          </div>
           <IonLoading isOpen={isLoading} message="Cargando..." />
           {error && <p className="error-message">{error}</p>}
           {message && <p className="success-message">{message}</p>}
-          <h2>Lista de Negocios ({negocios.length})</h2>
-          <div className="negocios-list">
-            {negocios.length > 0 ? (
-              negocios.map((negocio) => (
-                <div
-                  key={negocio.id}
-                  className={`negocio-card ${negocioSeleccionado?.id === negocio.id ? 'selected-card' : ''}`}
-                >
-                  <div className="negocio-header">
-                    <h3>{negocio.nombre}</h3>
-                    <div className="button-group">
-                      <IonButton onClick={() => handleSelectNegocio(negocio)} size="small" color="primary">
-                        Editar
-                      </IonButton>
-                      <IonButton onClick={() => handleDeleteNegocio(negocio.id)} size="small" color="danger">
-                        Eliminar
-                      </IonButton>
-                    </div>
-                  </div>
-                  <p><strong>ID:</strong> {negocio.id}</p>
-                  <p><strong>WhatsApp:</strong> {negocio.whatsapp || 'N/A'}</p>
-                  <p><strong>Dirección:</strong> {negocio.direccion || 'N/A'}</p>
-                  <p><strong>Coordenadas:</strong> Latitud: {negocio.coordenadas?.lat || 'N/A'}, Longitud: {negocio.coordenadas?.lng || 'N/A'}</p>
-                  <p><strong>Categoría:</strong> {negocio.categoria || 'N/A'}</p>
-                  <p><strong>Instagram:</strong> {negocio.instagram || 'N/A'}</p>
-                  <p><strong>TikTok:</strong> {negocio.tiktok || 'N/A'}</p>
-                  <p><strong>Web:</strong> {negocio.web || 'N/A'}</p>
-                  <p><strong>Administradores:</strong> {(negocio.administradores || []).join(', ') || 'N/A'}</p>
-                  <p><strong>Foto:</strong> <a href={negocio.foto || '#'} target="_blank" rel="noopener noreferrer">Ver Foto</a></p>
-                  <p><strong>Logo:</strong> <a href={negocio.logo || '#'} target="_blank" rel="noopener noreferrer">Ver Logo</a></p>
-                  <p><strong>Código QR:</strong> <a href={negocio.codigoQr || '#'} target="_blank" rel="noopener noreferrer">Ver Código QR</a></p>
-                </div>
-              ))
-            ) : (
-              <p>No se encontraron negocios.</p>
-            )}
-          </div>
+          {renderContent()}
         </div>
         <IonAlert
           isOpen={showAlert}
@@ -367,7 +326,6 @@ const Prueba: React.FC = () => {
             {
               text: 'Cancelar',
               role: 'cancel',
-              cssClass: 'secondary',
             },
             {
               text: 'Eliminar',
