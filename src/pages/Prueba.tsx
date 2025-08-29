@@ -46,6 +46,7 @@ const initialState: Omit<Negocio, 'id'> = {
   administradores: [],
   logo: '',
   categoria: '',
+  lugar: [], // <-- Nuevo campo 'lugar' inicializado como un array vacío
 };
 
 type ViewMode = 'list' | 'create' | 'details';
@@ -97,6 +98,9 @@ const Prueba: React.FC = () => {
       } else if (name === 'administradores') {
         const adminValues = (value?.toString() || '').split(',').map(item => item.trim());
         newData.administradores = adminValues;
+      } else if (name === 'lugar') { // <-- Lógica para manejar el nuevo campo 'lugar'
+        const lugarValues = (value?.toString() || '').split(',').map(item => item.trim());
+        newData.lugar = lugarValues;
       } else {
         (newData as any)[name] = typeof value === 'string' || typeof value === 'number' ? String(value) : '';
       }
@@ -117,13 +121,23 @@ const Prueba: React.FC = () => {
         if (negocioSeleccionado.id) {
           await updateDocument(negociosCollection, negocioSeleccionado.id, negocioData);
           setMessage('Negocio actualizado con éxito.');
+          
+          setNegocios(prevNegocios =>
+            prevNegocios.map(neg =>
+              neg.id === negocioSeleccionado.id ? { id: negocioSeleccionado.id, ...negocioData } : neg
+            )
+          );
+          
+          setNegocioSeleccionado({ id: negocioSeleccionado.id, ...negocioData });
+          setViewMode('details');
         }
       } else {
         const newDocId = await addDocument(negociosCollection, negocioData);
         setMessage('Negocio agregado con éxito.');
         setNegocios(prevNegocios => [...prevNegocios, { id: newDocId, ...negocioData }]);
+        handleClearSelection();
+        setViewMode('list');
       }
-      handleClearSelection();
     } catch (err) {
       console.error(err);
       setError('No se pudo guardar el negocio.');
@@ -148,6 +162,7 @@ const Prueba: React.FC = () => {
       administradores: negocio.administradores || [],
       logo: negocio.logo || '',
       categoria: negocio.categoria || '',
+      lugar: negocio.lugar || [], // <-- Se agrega el campo 'lugar'
     });
     setViewMode('details');
   };
@@ -237,6 +252,15 @@ const Prueba: React.FC = () => {
           <IonLabel position="floating">Categoría</IonLabel>
           <IonInput name="categoria" value={negocioData.categoria} onIonChange={handleInputChange} disabled={isLoading} />
         </IonItem>
+        <IonItem> {/* <-- Nuevo campo para 'lugar' */}
+          <IonLabel position="floating">Lugar (ej. Turmero, Maracay)</IonLabel>
+          <IonInput 
+            name="lugar" 
+            value={negocioData.lugar.join(', ')} 
+            onIonChange={handleInputChange} 
+            disabled={isLoading} 
+          />
+        </IonItem>
         {/* Aquí puedes agregar más campos según tu tipo Negocio */}
         
         <div className="button-group">
@@ -258,7 +282,7 @@ const Prueba: React.FC = () => {
       <p><strong>Dirección:</strong> {negocioSeleccionado?.direccion || 'N/A'}</p>
       <p><strong>Categoría:</strong> {negocioSeleccionado?.categoria || 'N/A'}</p>
       <p><strong>ID:</strong> {negocioSeleccionado?.id}</p>
-      {/* Muestra el resto de los campos aquí */}
+      <p><strong>Lugar:</strong> {(negocioSeleccionado?.lugar || []).join(', ') || 'N/A'}</p> {/* <-- Se muestra el campo 'lugar' */}
       <p><strong>Coordenadas:</strong> Latitud: {negocioSeleccionado?.coordenadas?.lat || 'N/A'}, Longitud: {negocioSeleccionado?.coordenadas?.lng || 'N/A'}</p>
       <p><strong>Instagram:</strong> {negocioSeleccionado?.instagram || 'N/A'}</p>
       <p><strong>TikTok:</strong> {negocioSeleccionado?.tiktok || 'N/A'}</p>

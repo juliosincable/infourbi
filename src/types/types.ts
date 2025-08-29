@@ -26,12 +26,7 @@ export interface Negocio {
   administradores: string[];
   logo: string; // URL del logo
   categoria: string;
-}
-
-export interface Lugar {
-  id?: string;
-  nombre: string;
-  negocio_id: string;
+  lugar: string[]; // <-- Nuevo campo 'lugar' como un array de strings
 }
 
 export interface Lugar {
