@@ -1,5 +1,3 @@
-// src/pages/Home.tsx
-
 import React, { useState, useEffect } from "react";
 import {
   IonButton,
@@ -9,9 +7,6 @@ import {
   IonTitle,
   IonToolbar,
   IonButtons,
-  IonList,
-  IonItem,
-  IonActionSheet,
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import "../theme/variables.css";
@@ -19,6 +14,11 @@ import "../theme/variables.css";
 import { Negocio } from "../types/types";
 import { negociosCollection } from "../service/database";
 import { getDocs } from "firebase/firestore";
+
+// Importa los nuevos componentes
+import Ciudades from "../components/Ciudades";
+import Buscador from "../components/Buscador";
+import Listado from "../components/Listado";
 
 const Home = () => {
   const history = useHistory();
@@ -63,69 +63,20 @@ const Home = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen className="ion-padding">
-        {/* Sección 1: Selector de ciudad */}
-        <h1 style={{ textAlign: 'center', fontWeight: 'bold' }}>{currentCity}</h1>
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <IonButton onClick={() => setShowCityMenu(true)}>
-            Seleccionar ciudad
-          </IonButton>
-        </div>
-        <IonActionSheet
-          isOpen={showCityMenu}
-          onDidDismiss={() => setShowCityMenu(false)}
-          header="Selecciona una ciudad"
-          buttons={[
-            {
-              text: 'Turmero',
-              handler: () => setCurrentCity('Turmero'),
-            },
-            {
-              text: 'Maracay',
-              handler: () => setCurrentCity('Maracay'),
-            },
-            {
-              text: 'Cagua',
-              handler: () => setCurrentCity('Cagua'),
-            },
-            {
-              text: 'Cancelar',
-              role: 'cancel',
-            },
-          ]}
-        ></IonActionSheet>
-        
-        {/* Sección 2: Búsqueda (sin funcionalidad) */}
         <div className="home-container">
-          <div className="search-container">
-            <div className="search-bar">
-              <label htmlFor="nombre-usuario">Buscar:</label>
-              <input
-                type="text"
-                id="nombre-usuario"
-                placeholder="ej. Panadería"
-              />
-            </div>
-            <IonButton expand="block" color="primary">
-              Buscar
-            </IonButton>
-          </div>
-        </div>
+          {/* Componente para la selección de ciudad */}
+          <Ciudades
+            currentCity={currentCity}
+            showCityMenu={showCityMenu}
+            setShowCityMenu={setShowCityMenu}
+            setCurrentCity={setCurrentCity}
+          />
+          
+          {/* Componente del buscador */}
+          <Buscador />
 
-        {/* Sección 3: Lista de negocios */}
-        <div className="results-container">
-          {loading && <p className="ion-text-center">Cargando...</p>}
-          {!loading && businesses.length > 0 && (
-            <IonList>
-              {businesses.map((business) => (
-                <IonItem key={business.id}>
-                  {business.nombre}
-                </IonItem>
-              ))}
-            </IonList>
-          )}
-          {!loading && businesses.length === 0 && (
-            <p className="ion-text-center">No hay negocios para mostrar.</p>
-          )}
+          {/* Componente del listado de negocios */}
+          <Listado businesses={businesses} loading={loading} />
         </div>
       </IonContent>
     </IonPage>
