@@ -1,5 +1,3 @@
-// src/types.ts
-
 import { DocumentData, DocumentSnapshot } from 'firebase/firestore';
 
 export interface Usuario {
@@ -26,13 +24,30 @@ export interface Negocio {
   administradores: string[];
   logo: string; // URL del logo
   categoria: string;
-  lugar: string[]; // <-- Nuevo campo 'lugar' como un array de strings
+  lugar: string[]; // <-- Campo 'lugar' como un array de strings
 }
 
 export interface Lugar {
   id?: string;
   nombre: string;
   negocio_id: string;
+}
+
+export interface Pais {
+  id?: string;
+  nombre: string;
+}
+
+export interface Estado {
+  id?: string;
+  nombre: string;
+  pais_id: string; // Referencia al ID del país
+}
+
+export interface Ciudad {
+  id?: string;
+  nombre: string;
+  estado_id: string; // Referencia al ID del estado
 }
 
 export interface Evento {

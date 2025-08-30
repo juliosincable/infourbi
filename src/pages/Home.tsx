@@ -1,3 +1,5 @@
+// src/pages/Home.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   IonButton,
@@ -27,6 +29,14 @@ const Home = () => {
   const [showCityMenu, setShowCityMenu] = useState(false);
   const [currentCity, setCurrentCity] = useState("Selecciona una ciudad");
 
+  // Nuevo efecto para cargar la ciudad desde localStorage al iniciar la app
+  useEffect(() => {
+    const storedCity = localStorage.getItem("selectedCity");
+    if (storedCity) {
+      setCurrentCity(storedCity);
+    }
+  }, []);
+
   useEffect(() => {
     // Lee la coleccion 'negocios' y muestra todos los nombres
     const loadAllBusinesses = async () => {
@@ -52,6 +62,12 @@ const Home = () => {
     history.push("/prueba");
   };
 
+  // Función para manejar el cambio de ciudad y guardarla en localStorage
+  const handleSetCity = (city: string) => {
+    setCurrentCity(city);
+    localStorage.setItem("selectedCity", city);
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -69,9 +85,10 @@ const Home = () => {
             currentCity={currentCity}
             showCityMenu={showCityMenu}
             setShowCityMenu={setShowCityMenu}
-            setCurrentCity={setCurrentCity}
+            // Pasa la nueva función `handleSetCity`
+            setCurrentCity={handleSetCity}
           />
-          
+
           {/* Componente del buscador */}
           <Buscador />
 

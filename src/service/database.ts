@@ -1,6 +1,4 @@
-// src/service/database.ts
-
-import { db } from "../service/firebaseConfig"; // Asegúrate de que esta ruta sea correcta
+import { db } from "../service/firebaseConfig";
 import {
   collection,
   getDocs,
@@ -23,13 +21,15 @@ import {
   DocumentSnapshot,
 } from "firebase/firestore";
 
-// --- Importa las interfaces desde el nuevo archivo de tipos ---
 import {
   Usuario,
   Negocio,
   Lugar,
   Evento,
   Producto,
+  Pais,
+  Estado,
+  Ciudad,
   PaginationOptions,
 } from '../types/types';
 
@@ -54,20 +54,23 @@ const createConverter = <T extends { id?: string }>(): FirestoreDataConverter<T>
 });
 
 // --- REFERENCIAS A COLECCIONES CON TIPADO FUERTE ---
-const usuariosCollection = collection(db, "usuarios").withConverter(createConverter<Usuario>());
-const negociosCollection = collection(db, "negocios").withConverter(createConverter<Negocio>());
-const lugaresCollection = collection(db, "lugares").withConverter(createConverter<Lugar>());
-const eventosCollection = collection(db, "eventos").withConverter(createConverter<Evento>());
-const productosCollection = collection(db, "productos").withConverter(createConverter<Producto>());
+export const usuariosCollection = collection(db, "usuarios").withConverter(createConverter<Usuario>());
+export const negociosCollection = collection(db, "negocios").withConverter(createConverter<Negocio>());
+export const lugaresCollection = collection(db, "lugares").withConverter(createConverter<Lugar>());
+export const eventosCollection = collection(db, "eventos").withConverter(createConverter<Evento>());
+export const productosCollection = collection(db, "productos").withConverter(createConverter<Producto>());
+export const paisesCollection = collection(db, "paises").withConverter(createConverter<Pais>());
+export const estadosCollection = collection(db, "estados").withConverter(createConverter<Estado>());
+export const ciudadesCollection = collection(db, "ciudades").withConverter(createConverter<Ciudad>());
 
 // --- OPERACIONES CRUD GENÉRICAS ---
-
 export const getDocuments = async <T extends { id?: string }>(
   collectionRef: CollectionReference<T>,
   pagination?: PaginationOptions
 ): Promise<{ data: T[]; lastVisible: DocumentSnapshot<DocumentData> | null }> => {
   try {
     let q: Query<T> = query(collectionRef);
+
     if (pagination) {
       if (pagination.orderByField) {
         q = query(q, orderBy(pagination.orderByField, pagination.orderDirection || 'asc'));
@@ -79,9 +82,11 @@ export const getDocuments = async <T extends { id?: string }>(
         q = query(q, startAfter(pagination.startAfterDoc));
       }
     }
+
     const querySnapshot = await getDocs(q);
-    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+    const lastVisible = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null;
     const data = querySnapshot.docs.map((doc) => doc.data());
+
     return { data, lastVisible };
   } catch (error) {
     console.error("Error al obtener documentos:", error);
@@ -108,7 +113,7 @@ export const addDocument = async <T extends { id?: string }>(
   data: Omit<T, 'id'>
 ): Promise<string> => {
   try {
-    const docRef = await addDoc(collectionRef, data as T);
+    const docRef = await addDoc(collectionRef as CollectionReference<Omit<T, 'id'>>, data);
     return docRef.id;
   } catch (error) {
     console.error("Error al agregar un nuevo documento:", error);
@@ -177,12 +182,4 @@ export const getProductosByNegocio = async (negocioId: string) => {
   const q = query(productosCollection, where("negocio_id", "==", negocioId), orderBy("nombre", "asc"));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
-};
-
-export {
-  usuariosCollection,
-  negociosCollection,
-  lugaresCollection,
-  eventosCollection,
-  productosCollection,
 };
