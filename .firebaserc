@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "infourbi-8df9c"
-  }
+    "default": "infourbi-8df9c",
+    "infourbi": "infourbi-8df9c"
+  },
+  "targets": {},
+  "etags": {}
 }

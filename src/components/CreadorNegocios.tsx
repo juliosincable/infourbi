@@ -96,6 +96,7 @@ const CreadorNegocios: React.FC = () => {
         const lugarValues = (value?.toString() || '').split(',').map(item => item.trim());
         newData.lugar = lugarValues;
       } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (newData as any)[name] = typeof value === 'string' || typeof value === 'number' ? String(value) : '';
       }
       return newData;

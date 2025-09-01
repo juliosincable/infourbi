@@ -44,7 +44,7 @@ const CreadorEstados: React.FC = () => {
     try {
       const { data } = await getDocuments<Estado>(estadosCollection);
       setEstados(data);
-    } catch (err) {
+    } catch (_) {
       setError('Error al cargar la lista de estados.');
     } finally {
       setLoading(false);
@@ -55,7 +55,7 @@ const CreadorEstados: React.FC = () => {
     try {
       const { data } = await getDocuments<Pais>(paisesCollection);
       setPaises(data);
-    } catch (err) {
+    } catch (_) {
       setError('Error al cargar la lista de países.');
     }
   };
@@ -83,7 +83,7 @@ const CreadorEstados: React.FC = () => {
       setEditingEstado(null);
       setViewMode('list');
       await fetchEstados();
-    } catch (err) {
+    } catch (_) {
       setError('Error al guardar el estado.');
     } finally {
       setLoading(false);
@@ -103,7 +103,7 @@ const CreadorEstados: React.FC = () => {
       try {
         await deleteDocument(estadosCollection, estadoToDelete);
         await fetchEstados();
-      } catch (err) {
+      } catch {
         setError('Error al eliminar el estado.');
       } finally {
         setLoading(false);

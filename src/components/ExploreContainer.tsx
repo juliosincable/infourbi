@@ -3,9 +3,7 @@ import React from 'react';
 // Importa el único archivo de estilos que se está utilizando.
 import '../theme/variables.css';
 
-interface ContainerProps { }
-
-const ExploreContainer: React.FC<ContainerProps> = () => {
+const ExploreContainer: React.FC = () => {
   return (
     <div className="container">
       <div className="search-container">

@@ -9,7 +9,7 @@ declare const self: ServiceWorkerGlobalScope;
 // This variable is defined by the `vite-plugin-pwa` plugin.
 precacheAndRoute(self.__WB_MANIFEST || []);
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', (_event) => {
   console.log('Service worker installed');
   self.skipWaiting();
 });

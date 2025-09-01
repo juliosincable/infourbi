@@ -36,7 +36,7 @@ import {
 // --- CONVERSOR DE DATOS GENÉRICO ---
 const createConverter = <T extends { id?: string }>(): FirestoreDataConverter<T> => ({
   toFirestore: (data: WithFieldValue<T>): DocumentData => {
-    const { id, ...rest } = data;
+    const { id: _id, ...rest } = data;
     return rest;
   },
   fromFirestore: (snapshot: QueryDocumentSnapshot): T => {

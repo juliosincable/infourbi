@@ -44,7 +44,7 @@ const CreadorCiudades: React.FC = () => {
     try {
       const { data } = await getDocuments<Ciudad>(ciudadesCollection);
       setCiudades(data);
-    } catch (err) {
+    } catch (_) {
       setError('Error al cargar la lista de ciudades.');
     } finally {
       setLoading(false);
@@ -55,7 +55,7 @@ const CreadorCiudades: React.FC = () => {
     try {
       const { data } = await getDocuments<Estado>(estadosCollection);
       setEstados(data);
-    } catch (err) {
+    } catch (_) {
       setError('Error al cargar la lista de estados.');
     }
   };
@@ -83,7 +83,7 @@ const CreadorCiudades: React.FC = () => {
       setEditingCiudad(null);
       setViewMode('list');
       await fetchCiudades();
-    } catch (err) {
+    } catch (_) {
       setError('Error al guardar la ciudad.');
     } finally {
       setLoading(false);
@@ -103,7 +103,7 @@ const CreadorCiudades: React.FC = () => {
       try {
         await deleteDocument(ciudadesCollection, ciudadToDelete);
         await fetchCiudades();
-      } catch (err) {
+      } catch {
         setError('Error al eliminar la ciudad.');
       } finally {
         setLoading(false);

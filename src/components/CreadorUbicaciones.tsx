@@ -6,10 +6,10 @@ import {
   IonButton,
   IonInput,
   IonLoading,
-  IonAlert,
   IonSelect,
   IonSelectOption,
 } from '@ionic/react';
+import { IonSelectCustomEvent, SelectChangeEventDetail } from '@ionic/core';
 import {
   addDocument,
   getDocuments,
@@ -23,7 +23,6 @@ const CreadorUbicaciones: React.FC = () => {
   const [paises, setPaises] = useState<Pais[]>([]);
   const [estados, setEstados] = useState<Estado[]>([]);
   const [estadosFiltrados, setEstadosFiltrados] = useState<Estado[]>([]);
-  const [ciudades, setCiudades] = useState<Ciudad[]>([]);
 
   const [paisSeleccionadoId, setPaisSeleccionadoId] = useState('');
   const [estadoSeleccionadoId, setEstadoSeleccionadoId] = useState('');
@@ -44,11 +43,9 @@ const CreadorUbicaciones: React.FC = () => {
     try {
       const { data: paisesData } = await getDocuments<Pais>(paisesCollection);
       const { data: estadosData } = await getDocuments<Estado>(estadosCollection);
-      const { data: ciudadesData } = await getDocuments<Ciudad>(ciudadesCollection);
       setPaises(paisesData);
       setEstados(estadosData);
-      setCiudades(ciudadesData);
-    } catch (err) {
+    } catch {
       setError('Error al cargar los datos.');
     } finally {
       setLoading(false);
@@ -67,13 +64,13 @@ const CreadorUbicaciones: React.FC = () => {
     setEstadoSeleccionadoId('');
   }, [paisSeleccionadoId, estados]);
 
-  const handlePaisChange = (e: any) => {
+  const handlePaisChange = (e: IonSelectCustomEvent<SelectChangeEventDetail>) => {
     const selectedId = e.detail.value;
     setPaisSeleccionadoId(selectedId);
     setNombrePaisNuevo(''); // Limpiar el campo del nuevo país
   };
 
-  const handleEstadoChange = (e: any) => {
+  const handleEstadoChange = (e: IonSelectCustomEvent<SelectChangeEventDetail>) => {
     const selectedId = e.detail.value;
     setEstadoSeleccionadoId(selectedId);
     setNombreEstadoNuevo(''); // Limpiar el campo del nuevo estado
@@ -120,7 +117,7 @@ const CreadorUbicaciones: React.FC = () => {
       setNombrePaisNuevo('');
       setNombreEstadoNuevo('');
       await fetchData(); // Recargar los datos para actualizar las listas
-    } catch (err) {
+    } catch {
       setError('Error al guardar la ciudad. Por favor, inténtelo de nuevo.');
     } finally {
       setLoading(false);
