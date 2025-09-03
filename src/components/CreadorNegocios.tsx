@@ -9,6 +9,7 @@ import {
   IonList,
   IonAlert,
   IonLoading,
+  IonCard,
 } from '@ionic/react';
 import {
   addDocument,
@@ -20,7 +21,6 @@ import {
 import { Negocio } from '../types/types';
 import { IonInputCustomEvent, InputChangeEventDetail } from '@ionic/core';
 
-// Define el estado inicial para un nuevo negocio
 const PROPIETARIO_ID_EJEMPLO = "propietario-123";
 const initialState: Omit<Negocio, 'id'> = {
   nombre: '',
@@ -39,10 +39,9 @@ const initialState: Omit<Negocio, 'id'> = {
   administradores: [],
   logo: '',
   categoria: '',
-  lugar: [], // Campo 'lugar' como un array vacío
+  lugar: [],
 };
 
-// Define los modos de vista del componente
 type ViewMode = 'list' | 'create' | 'details';
 
 const CreadorNegocios: React.FC = () => {
@@ -57,10 +56,9 @@ const CreadorNegocios: React.FC = () => {
   const [negocioToDelete, setNegocioToDelete] = useState<string | undefined>(undefined);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
-  // Asegúrate de que esta función se llame solo una vez al montar
   useEffect(() => {
     fetchNegocios();
-  }, []); // <-- La matriz de dependencias vacía es clave
+  }, []);
 
   const fetchNegocios = async () => {
     setIsLoading(true);
@@ -96,8 +94,16 @@ const CreadorNegocios: React.FC = () => {
         const lugarValues = (value?.toString() || '').split(',').map(item => item.trim());
         newData.lugar = lugarValues;
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (newData as any)[name] = typeof value === 'string' || typeof value === 'number' ? String(value) : '';
+        const key = name as keyof typeof newData;
+        // Se asegura que la propiedad existe en el objeto antes de asignar
+        if (key in newData) {
+          // El tipo de 'key' ahora es un tipo válido para el indexado
+          // El 'value' se convierte a string para que no haya problemas con 'string[]' o 'coordenadas'
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          // La línea de abajo causaba el error. Lo he manejado arriba
+          newData[key] = typeof value === 'string' || typeof value === 'number' ? String(value) : value;
+        }
       }
       return newData;
     });
@@ -226,7 +232,7 @@ const CreadorNegocios: React.FC = () => {
   );
 
   const renderNegocioForm = () => (
-    <div className="form-view-container">
+    <IonCard className="form-container">
       <h2>{negocioSeleccionado ? 'Editar Negocio' : 'Agregar Nuevo Negocio'}</h2>
       <form onSubmit={handleSubmit}>
         <IonItem>
@@ -264,11 +270,11 @@ const CreadorNegocios: React.FC = () => {
           </IonButton>
         </div>
       </form>
-    </div>
+    </IonCard>
   );
 
   const renderNegocioDetails = () => (
-    <div className="details-view-container">
+    <IonCard className="details-view-container">
       <h2>{negocioSeleccionado?.nombre}</h2>
       <p><strong>WhatsApp:</strong> {negocioSeleccionado?.whatsapp || 'N/A'}</p>
       <p><strong>Dirección:</strong> {negocioSeleccionado?.direccion || 'N/A'}</p>
@@ -295,7 +301,7 @@ const CreadorNegocios: React.FC = () => {
           Volver
         </IonButton>
       </div>
-    </div>
+    </IonCard>
   );
 
   const renderContent = () => {

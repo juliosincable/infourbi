@@ -1,25 +1,25 @@
-/* Paleta de colores audaces (azul y verde) */
+/* Paleta de colores y variables personalizadas */
 :root {
-  --ion-color-primary: #3498db;
-  --ion-color-primary-rgb: 52, 152, 219;
-  --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #2d81bc;
-  --ion-color-primary-tint: #479ed9;
+  --ion-color-primary: #00B4D8;
+  --ion-color-primary-rgb: 0, 180, 216;
+  --ion-color-primary-contrast: #000000;
+  --ion-color-primary-contrast-rgb: 0, 0, 0;
+  --ion-color-primary-shade: #009ebf;
+  --ion-color-primary-tint: #1ac8e0;
 
-  --ion-color-secondary: #2ecc71;
-  --ion-color-secondary-rgb: 46, 204, 113;
+  --ion-color-secondary: #0077B6;
+  --ion-color-secondary-rgb: 0, 119, 182;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
-  --ion-color-secondary-shade: #28b562;
-  --ion-color-secondary-tint: #42d37e;
+  --ion-color-secondary-shade: #0069a0;
+  --ion-color-secondary-tint: #1a85be;
 
-  --ion-color-tertiary: #9b59b6;
-  --ion-color-tertiary-rgb: 155, 89, 182;
-  --ion-color-tertiary-contrast: #ffffff;
-  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
-  --ion-color-tertiary-shade: #894ea0;
-  --ion-color-tertiary-tint: #a569bd;
+  --ion-color-tertiary: #90E0EF;
+  --ion-color-tertiary-rgb: 144, 224, 239;
+  --ion-color-tertiary-contrast: #000000;
+  --ion-color-tertiary-contrast-rgb: 0, 0, 0;
+  --ion-color-tertiary-shade: #7fcae2;
+  --ion-color-tertiary-tint: #9ae8f3;
 
   --ion-color-success: #2ecc71;
   --ion-color-success-rgb: 46, 204, 113;
@@ -42,26 +42,26 @@
   --ion-color-danger-shade: #cb4335;
   --ion-color-danger-tint: #e95e51;
 
-  --ion-color-dark: #34495e;
-  --ion-color-dark-rgb: 52, 73, 94;
+  --ion-color-dark: #03045E;
+  --ion-color-dark-rgb: 3, 4, 94;
   --ion-color-dark-contrast: #ffffff;
   --ion-color-dark-contrast-rgb: 255, 255, 255;
-  --ion-color-dark-shade: #2e4051;
-  --ion-color-dark-tint: #485b6d;
+  --ion-color-dark-shade: #030452;
+  --ion-color-dark-tint: #1c1d6d;
 
-  --ion-color-medium: #bdc3c7;
-  --ion-color-medium-rgb: 189, 195, 199;
+  --ion-color-medium: #90E0EF;
+  --ion-color-medium-rgb: 144, 224, 239;
   --ion-color-medium-contrast: #000000;
   --ion-color-medium-contrast-rgb: 0, 0, 0;
-  --ion-color-medium-shade: #a6adb0;
-  --ion-color-medium-tint: #c4c8cb;
+  --ion-color-medium-shade: #7fcae2;
+  --ion-color-medium-tint: #9ae8f3;
 
-  --ion-color-light: #ecf0f1;
-  --ion-color-light-rgb: 236, 240, 241;
+  --ion-color-light: #CAF0F8;
+  --ion-color-light-rgb: 202, 240, 248;
   --ion-color-light-contrast: #000000;
   --ion-color-light-contrast-rgb: 0, 0, 0;
-  --ion-color-light-shade: #d0d4d5;
-  --ion-color-light-tint: #edf1f2;
+  --ion-color-light-shade: #b2d5d8;
+  --ion-color-light-tint: #cbe3e8;
 
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   --box-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.15);
@@ -80,11 +80,11 @@
 }
 
 /* Estilos de la tarjeta principal para el formulario */
-.form-container {
-  background: var(--ion-color-light);
+ion-card.form-container {
+  --background: var(--ion-color-light);
+  --box-shadow: var(--box-shadow);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: var(--box-shadow);
   margin-bottom: 24px;
 }
 
@@ -97,18 +97,22 @@
 }
 
 /* Estilos de la tarjeta individual de negocio */
-.negocio-card {
-  background: #ffffff;
+ion-card.negocio-card {
+  --background: #ffffff;
+  --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
+  /* El padding original del componente es 16px */
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 16px;
+  --padding-bottom: 16px;
 }
 
-.negocio-card:hover {
+ion-card.negocio-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .negocio-header {
@@ -135,10 +139,10 @@
   color: var(--ion-color-dark);
 }
 
-.selected-card {
+ion-card.selected-card {
   border: 2px solid var(--ion-color-primary);
-  background-color: var(--ion-color-primary-tint);
-  box-shadow: var(--box-shadow);
+  --background: var(--ion-color-primary-tint);
+  --box-shadow: var(--box-shadow);
 }
 
 /* Grupos de botones en el formulario */
@@ -186,11 +190,13 @@
   color: var(--ion-color-dark);
 }
 
-.search-container input {
-  padding: 10px;
-  border: 1px solid var(--ion-color-medium);
-  border-radius: 5px;
-  width: 100%;
+/* Estiliza directamente el IonInput usando variables CSS de Ionic */
+ion-input {
+  --padding-start: 10px;
+  --border-radius: 5px;
+  --border-width: 1px;
+  --border-color: var(--ion-color-medium);
+  --background: #fff; /* Asegura un fondo blanco si es necesario */
 }
 
 /* Nuevos estilos específicos para las vistas del panel de control */
