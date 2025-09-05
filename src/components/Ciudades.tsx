@@ -1,5 +1,7 @@
 import React from 'react';
 import { IonButton, IonActionSheet } from '@ionic/react';
+// 1. Importa el módulo CSS
+import styles from './Ciudades.module.css';
 
 interface CiudadesProps {
   currentCity: string;
@@ -11,8 +13,9 @@ interface CiudadesProps {
 const Ciudades: React.FC<CiudadesProps> = ({ currentCity, showCityMenu, setShowCityMenu, setCurrentCity }) => {
   return (
     <>
-      <h1 style={{ textAlign: "center", fontWeight: "bold" }}>{currentCity}</h1>
-      <div style={{ textAlign: "center", marginBottom: "16px" }}>
+      {/* 2. Usa las clases del módulo */}
+      <h1 className={`${styles.centeredText} ${styles.boldText}`}>{currentCity}</h1>
+      <div className={`${styles.centeredText} ${styles.marginBottom16}`}>
         <IonButton onClick={() => setShowCityMenu(true)}>
           Seleccionar ciudad
         </IonButton>

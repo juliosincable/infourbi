@@ -1,0 +1,12 @@
+/* src/components/Ciudades/Ciudades.module.css */
+.centeredText {
+  text-align: center;
+}
+
+.boldText {
+  font-weight: bold;
+}
+
+.marginBottom16 {
+  margin-bottom: 16px;
+}
