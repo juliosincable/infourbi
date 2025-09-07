@@ -1,11 +1,47 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonBackButton, IonButtons } from '@ionic/react';
+import { IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonBackButton, IonButtons, IonSpinner } from '@ionic/react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../service/firebaseConfig'; // Asegúrate de que esta ruta sea correcta
+
+interface Negocio {
+  id: string;
+  nombre: string;
+  // Agrega aquí el resto de las propiedades de tu negocio
+}
 
 const PaginaDetalleNegocio: React.FC = () => {
-  // Obtiene el 'id' del negocio de la URL (ej. "/negocio/123")
   const { id } = useParams<{ id: string }>();
+  const [negocio, setNegocio] = useState<Negocio | null>(null);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    const obtenerNegocio = async () => {
+      if (!id) {
+        setCargando(false);
+        return;
+      }
+      try {
+        const docRef = doc(db, "negocios", id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          // El documento existe, obtén los datos
+          setNegocio({ id: docSnap.id, ...docSnap.data() } as Negocio);
+        } else {
+          // El documento no existe
+          console.log("No se encontró el documento!");
+          setNegocio(null);
+        }
+      } catch (e) {
+        console.error("Error al obtener el documento: ", e);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    obtenerNegocio();
+  }, [id]);
 
   return (
     <IonPage>
@@ -14,12 +50,21 @@ const PaginaDetalleNegocio: React.FC = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/home" />
           </IonButtons>
-          <IonTitle>Detalles del Negocio</IonTitle>
+          <IonTitle>{negocio ? negocio.nombre : 'Detalles del Negocio'}</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
-        <h1>Detalles del Negocio: {id}</h1>
-        <p>Aquí es donde cargarías y mostrarías la información del negocio con el ID: **{id}**</p>
+        {cargando && <IonSpinner name="dots" />}
+        {!cargando && negocio && (
+          <div>
+            <h1>{negocio.nombre}</h1>
+            {/* Aquí puedes mostrar el resto de la información del negocio */}
+            <p>ID: {negocio.id}</p>
+          </div>
+        )}
+        {!cargando && !negocio && (
+          <p className="ion-text-center">No se encontraron datos para este negocio.</p>
+        )}
       </IonContent>
     </IonPage>
   );
