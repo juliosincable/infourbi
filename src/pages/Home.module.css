@@ -1,0 +1,9 @@
+/* src/pages/Home.module.css */
+
+.home-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto; /* <-- Agrega esta línea para centrar el contenedor horizontalmente */
+}

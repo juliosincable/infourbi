@@ -9,9 +9,13 @@ import {
   IonTitle,
   IonToolbar,
   IonButtons,
+  IonGrid,       // <-- Importa IonGrid
+  IonRow,        // <-- Importa IonRow
+  IonCol,        // <-- Importa IonCol
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
 import "../theme/variables.css";
+import styles from "./Home.module.css";
 
 import { Negocio } from "../types/types";
 import { negociosCollection } from "../service/database";
@@ -78,23 +82,23 @@ const Home = () => {
           </IonButtons>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding">
-        <div className="home-container">
-          {/* Componente para la selección de ciudad */}
-          <Ciudades
-            currentCity={currentCity}
-            showCityMenu={showCityMenu}
-            setShowCityMenu={setShowCityMenu}
-            // Pasa la nueva función `handleSetCity`
-            setCurrentCity={handleSetCity}
-          />
-
-          {/* Componente del buscador */}
-          <Buscador />
-
-          {/* Componente del listado de negocios */}
-          <Listado businesses={businesses} loading={loading} />
-        </div>
+      <IonContent fullscreen>
+        <IonGrid fixed className="ion-text-center">
+          <IonRow className="ion-justify-content-center ion-align-items-center">
+            <IonCol size="12">
+              <div className={styles['home-container']}>
+                <Ciudades
+                  currentCity={currentCity}
+                  showCityMenu={showCityMenu}
+                  setShowCityMenu={setShowCityMenu}
+                  setCurrentCity={handleSetCity}
+                />
+                <Buscador />
+                <Listado businesses={businesses} loading={loading} />
+              </div>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
       </IonContent>
     </IonPage>
   );

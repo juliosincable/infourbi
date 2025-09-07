@@ -1,5 +1,5 @@
-import React from 'react';
-import { IonList, IonItem } from '@ionic/react';
+import React from "react";
+import { IonList, IonItem } from "@ionic/react";
 import { Negocio } from "../types/types";
 
 interface ListadoProps {
@@ -13,12 +13,15 @@ const Listado: React.FC<ListadoProps> = ({ businesses, loading }) => {
       {loading && <p className="ion-text-center">Cargando...</p>}
       {!loading && businesses.length > 0 && (
         <IonList>
-          {businesses.map((business) => (
-            <IonItem key={business.id}>
-              {business.nombre}
-            </IonItem>
-          ))}
-        </IonList>
+  {businesses.map((business) => (
+    <IonItem
+      key={business.id}
+      routerLink={`/negocio/${business.id}`}
+    >
+      {business.nombre}
+    </IonItem>
+  ))}
+</IonList>
       )}
       {!loading && businesses.length === 0 && (
         <p className="ion-text-center">No hay negocios para mostrar.</p>
