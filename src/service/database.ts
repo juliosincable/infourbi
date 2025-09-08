@@ -31,10 +31,12 @@ import {
   Estado,
   Ciudad,
   PaginationOptions,
-} from '../types/types';
+} from "../types/types";
 
 // --- CONVERSOR DE DATOS GENÉRICO ---
-const createConverter = <T extends { id?: string }>(): FirestoreDataConverter<T> => ({
+const createConverter = <
+  T extends { id?: string }
+>(): FirestoreDataConverter<T> => ({
   toFirestore: (data: WithFieldValue<T>): DocumentData => {
     const { id: _id, ...rest } = data;
     return rest;
@@ -42,7 +44,7 @@ const createConverter = <T extends { id?: string }>(): FirestoreDataConverter<T>
   fromFirestore: (snapshot: QueryDocumentSnapshot): T => {
     const data = snapshot.data();
     for (const key in data) {
-      if (data[key]?.toDate && typeof data[key].toDate === 'function') {
+      if (data[key]?.toDate && typeof data[key].toDate === "function") {
         data[key] = data[key].toDate();
       }
     }
@@ -54,26 +56,48 @@ const createConverter = <T extends { id?: string }>(): FirestoreDataConverter<T>
 });
 
 // --- REFERENCIAS A COLECCIONES CON TIPADO FUERTE ---
-export const usuariosCollection = collection(db, "usuarios").withConverter(createConverter<Usuario>());
-export const negociosCollection = collection(db, "negocios").withConverter(createConverter<Negocio>());
-export const lugaresCollection = collection(db, "lugares").withConverter(createConverter<Lugar>());
-export const eventosCollection = collection(db, "eventos").withConverter(createConverter<Evento>());
-export const productosCollection = collection(db, "productos").withConverter(createConverter<Producto>());
-export const paisesCollection = collection(db, "paises").withConverter(createConverter<Pais>());
-export const estadosCollection = collection(db, "estados").withConverter(createConverter<Estado>());
-export const ciudadesCollection = collection(db, "ciudades").withConverter(createConverter<Ciudad>());
+export const usuariosCollection = collection(db, "usuarios").withConverter(
+  createConverter<Usuario>()
+);
+export const negociosCollection = collection(db, "negocios").withConverter(
+  createConverter<Negocio>()
+);
+export const lugaresCollection = collection(db, "lugares").withConverter(
+  createConverter<Lugar>()
+);
+export const eventosCollection = collection(db, "eventos").withConverter(
+  createConverter<Evento>()
+);
+export const productosCollection = collection(db, "productos").withConverter(
+  createConverter<Producto>()
+);
+export const paisesCollection = collection(db, "paises").withConverter(
+  createConverter<Pais>()
+);
+export const estadosCollection = collection(db, "estados").withConverter(
+  createConverter<Estado>()
+);
+export const ciudadesCollection = collection(db, "ciudades").withConverter(
+  createConverter<Ciudad>()
+);
 
 // --- OPERACIONES CRUD GENÉRICAS ---
 export const getDocuments = async <T extends { id?: string }>(
   collectionRef: CollectionReference<T>,
   pagination?: PaginationOptions
-): Promise<{ data: T[]; lastVisible: DocumentSnapshot<DocumentData> | null }> => {
+): Promise<{
+  data: T[];
+  lastVisible: DocumentSnapshot<DocumentData> | null;
+}> => {
   try {
     let q: Query<T> = query(collectionRef);
 
     if (pagination) {
       if (pagination.orderByField) {
-        q = query(q, orderBy(pagination.orderByField, pagination.orderDirection || 'asc'));
+        q = query(
+          q,
+          orderBy(pagination.orderByField, pagination.orderDirection || "asc")
+        );
       }
       if (pagination.pageSize) {
         q = query(q, limit(pagination.pageSize));
@@ -84,7 +108,10 @@ export const getDocuments = async <T extends { id?: string }>(
     }
 
     const querySnapshot = await getDocs(q);
-    const lastVisible = querySnapshot.docs.length > 0 ? querySnapshot.docs[querySnapshot.docs.length - 1] : null;
+    const lastVisible =
+      querySnapshot.docs.length > 0
+        ? querySnapshot.docs[querySnapshot.docs.length - 1]
+        : null;
     const data = querySnapshot.docs.map((doc) => doc.data());
 
     return { data, lastVisible };
@@ -110,10 +137,13 @@ export const getDocumentById = async <T extends { id?: string }>(
 
 export const addDocument = async <T extends { id?: string }>(
   collectionRef: CollectionReference<T>,
-  data: Omit<T, 'id'>
+  data: Omit<T, "id">
 ): Promise<string> => {
   try {
-    const docRef = await addDoc(collectionRef as CollectionReference<Omit<T, 'id'>>, data);
+    const docRef = await addDoc(
+      collectionRef as CollectionReference<Omit<T, "id">>,
+      data
+    );
     return docRef.id;
   } catch (error) {
     console.error("Error al agregar un nuevo documento:", error);
@@ -124,7 +154,7 @@ export const addDocument = async <T extends { id?: string }>(
 export const updateDocument = async <T extends { id?: string }>(
   collectionRef: CollectionReference<T>,
   id: string,
-  data: Partial<Omit<T, 'id'>>
+  data: Partial<Omit<T, "id">>
 ): Promise<void> => {
   try {
     const docRef = doc(collectionRef, id);
@@ -148,7 +178,8 @@ export const deleteDocument = async <T extends { id?: string }>(
 };
 
 // --- FUNCIONES ESPECÍFICAS POR ENTIDAD ---
-export const addUser = (data: Omit<Usuario, 'id'>) => addDocument(usuariosCollection, data);
+export const addUser = (data: Omit<Usuario, "id">) =>
+  addDocument(usuariosCollection, data);
 export const getUserByEmail = async (email: string) => {
   const q = query(usuariosCollection, where("correo", "==", email), limit(1));
   const querySnapshot = await getDocs(q);
@@ -156,30 +187,45 @@ export const getUserByEmail = async (email: string) => {
   return docSnap ? docSnap.data() : null;
 };
 
-export const addNegocio = (data: Omit<Negocio, 'id'>) => addDocument(negociosCollection, data);
+export const addNegocio = (data: Omit<Negocio, "id">) =>
+  addDocument(negociosCollection, data);
 export const getNegociosByPropietario = async (propietarioId: string) => {
-  const q = query(negociosCollection, where("propietario_id", "==", propietarioId));
+  const q = query(
+    negociosCollection,
+    where("propietario_id", "==", propietarioId)
+  );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
 };
 
-export const addLugar = (data: Omit<Lugar, 'id'>) => addDocument(lugaresCollection, data);
+export const addLugar = (data: Omit<Lugar, "id">) =>
+  addDocument(lugaresCollection, data);
 export const getLugaresByNegocio = async (negocioId: string) => {
   const q = query(lugaresCollection, where("negocio_id", "==", negocioId));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
 };
 
-export const addEvento = (data: Omit<Evento, 'id'>) => addDocument(eventosCollection, data);
+export const addEvento = (data: Omit<Evento, "id">) =>
+  addDocument(eventosCollection, data);
 export const getEventosByLugar = async (lugarId: string) => {
-  const q = query(eventosCollection, where("lugar_id", "==", lugarId), orderBy("fecha", "asc"));
+  const q = query(
+    eventosCollection,
+    where("lugar_id", "==", lugarId),
+    orderBy("fecha", "asc")
+  );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
 };
 
-export const addProducto = (data: Omit<Producto, 'id'>) => addDocument(productosCollection, data);
+export const addProducto = (data: Omit<Producto, "id">) =>
+  addDocument(productosCollection, data);
 export const getProductosByNegocio = async (negocioId: string) => {
-  const q = query(productosCollection, where("negocio_id", "==", negocioId), orderBy("nombre", "asc"));
+  const q = query(
+    productosCollection,
+    where("negocio_id", "==", negocioId),
+    orderBy("nombre", "asc")
+  );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data());
 };

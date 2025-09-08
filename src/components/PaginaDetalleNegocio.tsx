@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonBackButton, IonButtons, IonSpinner } from '@ionic/react';
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import {
+  IonContent,
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonBackButton,
+  IonButtons,
+  IonSpinner,
+  IonIcon,
+} from "@ionic/react";
+import { personCircleOutline } from "ionicons/icons";
+import { Negocio } from "../types/types";
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../service/firebaseConfig'; // Asegúrate de que esta ruta sea correcta
-
-interface Negocio {
-  id: string;
-  nombre: string;
-  // Agrega aquí el resto de las propiedades de tu negocio
-}
+import { db } from "../service/firebaseConfig";
+import styles from "./PaginaDetalleNegocio.module.css";
 
 const PaginaDetalleNegocio: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,10 +33,8 @@ const PaginaDetalleNegocio: React.FC = () => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          // El documento existe, obtén los datos
-          setNegocio({ id: docSnap.id, ...docSnap.data() } as Negocio);
+          setNegocio(docSnap.data() as Negocio);
         } else {
-          // El documento no existe
           console.log("No se encontró el documento!");
           setNegocio(null);
         }
@@ -50,20 +55,51 @@ const PaginaDetalleNegocio: React.FC = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/home" />
           </IonButtons>
-          <IonTitle>{negocio ? negocio.nombre : 'Detalles del Negocio'}</IonTitle>
+          <IonTitle>Detalles del Negocio</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding">
-        {cargando && <IonSpinner name="dots" />}
+      <IonContent>
+        {cargando && (
+          <div className={styles.contenedorCentrado}>
+            <IonSpinner name="dots" />
+          </div>
+        )}
         {!cargando && negocio && (
           <div>
-            <h1>{negocio.nombre}</h1>
-            {/* Aquí puedes mostrar el resto de la información del negocio */}
-            <p>ID: {negocio.id}</p>
+            <div className={styles.subheader}></div>
+            <div className={styles.iconContainer}>
+              <IonIcon icon={personCircleOutline} />
+            </div>
+            <div className={styles.businessInfo}>
+              <h1>{negocio.nombre}</h1>
+              <p>
+                <strong>Propietario:</strong> {negocio.propietario_id}
+              </p>
+              <p>
+                <strong>WhatsApp:</strong> {negocio.whatsapp}
+              </p>
+              <p>
+                <strong>Dirección:</strong> {negocio.direccion}
+              </p>
+              <p>
+                <strong>Categoría:</strong> {negocio.categoria}
+              </p>
+              <p>
+                <strong>Lugares:</strong> {negocio.lugar.join(", ")}
+              </p>
+              <p>
+                <strong>Administradores:</strong>{" "}
+                {negocio.administradores.join(", ")}
+              </p>
+            </div>
           </div>
         )}
         {!cargando && !negocio && (
-          <p className="ion-text-center">No se encontraron datos para este negocio.</p>
+          <div className={styles.contenedorCentrado}>
+            <p>
+              No se encontraron datos para este negocio.
+            </p>
+          </div>
         )}
       </IonContent>
     </IonPage>
