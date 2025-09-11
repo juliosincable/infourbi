@@ -11,9 +11,11 @@ import {
   IonBackButton,
 } from '@ionic/react';
 import CreadorNegocios from '../components/CreadorNegocios';
-// Importación del nuevo componente CreadorUbicaciones
 import CreadorUbicaciones from '../components/CreadorUbicaciones';
 import '../theme/variables.css';
+
+// 1. Importa el módulo CSS
+import styles from './Prueba.module.css';
 
 const Prueba: React.FC = () => {
   return (
@@ -27,11 +29,9 @@ const Prueba: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <div className="prueba-container">
-          {/* El componente CreadorNegocios se mantiene */}
+        {/* 2. Asigna la clase usando la sintaxis de módulos */}
+        <div className={styles.pruebaContainer}>
           <CreadorNegocios />
-
-          {/* Se reemplaza CreadorPaises por el nuevo CreadorUbicaciones */}
           <CreadorUbicaciones />
         </div>
       </IonContent>

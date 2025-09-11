@@ -11,7 +11,7 @@ import {
   IonSpinner,
   IonIcon,
 } from "@ionic/react";
-import { personCircleOutline } from "ionicons/icons";
+import { personCircleSharp } from "ionicons/icons";
 import { Negocio } from "../types/types";
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from "../service/firebaseConfig";
@@ -65,32 +65,40 @@ const PaginaDetalleNegocio: React.FC = () => {
           </div>
         )}
         {!cargando && negocio && (
-          <div>
+          <div className={styles.mainContainer}>
             <div className={styles.subheader}></div>
             <div className={styles.iconContainer}>
-              <IonIcon icon={personCircleOutline} />
+              <IonIcon icon={personCircleSharp} />
             </div>
             <div className={styles.businessInfo}>
+              {/* 1. Nombre */}
               <h1>{negocio.nombre}</h1>
-              <p>
-                <strong>Propietario:</strong> {negocio.propietario_id}
-              </p>
-              <p>
-                <strong>WhatsApp:</strong> {negocio.whatsapp}
-              </p>
+              {/* 2. Dirección */}
               <p>
                 <strong>Dirección:</strong> {negocio.direccion}
               </p>
+              {/* 3. WhatsApp */}
               <p>
-                <strong>Categoría:</strong> {negocio.categoria}
+                <strong>WhatsApp:</strong> {negocio.whatsapp}
               </p>
-              <p>
-                <strong>Lugares:</strong> {negocio.lugar.join(", ")}
-              </p>
-              <p>
-                <strong>Administradores:</strong>{" "}
-                {negocio.administradores.join(", ")}
-              </p>
+              {/* 4. Instagram (condicional) */}
+              {negocio.instagram && (
+                <p>
+                  <strong>Instagram:</strong> {negocio.instagram}
+                </p>
+              )}
+              {/* 5. TikTok (condicional) */}
+              {negocio.tiktok && (
+                <p>
+                  <strong>TikTok:</strong> {negocio.tiktok}
+                </p>
+              )}
+              {/* 6. Web (condicional) */}
+              {negocio.web && (
+                <p>
+                  <strong>Web:</strong> {negocio.web}
+                </p>
+              )}
             </div>
           </div>
         )}

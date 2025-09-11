@@ -78,7 +78,7 @@ const Home = () => {
         <IonToolbar>
           <IonTitle>infourbis</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={goToPrueba}>Prueba</IonButton>
+            <IonButton onClick={goToPrueba}>Administrar</IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>

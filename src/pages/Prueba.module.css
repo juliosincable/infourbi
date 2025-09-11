@@ -1,0 +1,13 @@
+.pruebaContainer {
+  /* Estilos para móviles (por defecto) */
+  width: 100%;
+  padding: 1rem;
+}
+
+/* Media query para pantallas con un ancho mínimo de 768px (tablets y escritorios) */
+@media (min-width: 768px) {
+  .pruebaContainer {
+    width: 70%; /* Ocupa el 70% del ancho */
+    margin: 0 auto; /* Centra el contenedor horizontalmente */
+  }
+}

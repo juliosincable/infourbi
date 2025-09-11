@@ -1,3 +1,18 @@
+/* Estilos para móviles (por defecto) */
+.mainContainer {
+  width: 100%;
+  padding: 1rem;
+}
+
+/* Media query para pantallas con un ancho mínimo de 768px (tablets y escritorios) */
+@media (min-width: 768px) {
+  .mainContainer {
+    width: 70%; /* Ocupa el 70% del ancho */
+    margin: 0 auto; /* Centra el contenedor horizontalmente */
+  }
+}
+
+/* El resto de tus clases */
 .subheader {
   background-color: #e0f2f7;
   height: 180px;
@@ -7,6 +22,7 @@
 .iconContainer {
   display: flex;
   justify-content: center;
+  width: 100%;
 }
 
 .iconContainer ion-icon {
@@ -18,13 +34,13 @@
 .businessInfo {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 20px 0;
+  align-items: flex-start;
+  text-align: left;
+  padding: 20px;
 }
 
 .businessInfo h1 {
-  margin-top: -10px; /* Valor negativo para pegar el nombre al ícono */
+  margin-top: -10px;
 }
 
 .businessInfo p {
@@ -32,7 +48,6 @@
   margin-bottom: 2px;
 }
 
-/* Clases que ya tenías y que no se modifican */
 .contenedorCentrado {
   display: flex;
   flex-direction: column;
