@@ -1,6 +1,8 @@
 import React from "react";
 import { IonList, IonItem } from "@ionic/react";
 import { Negocio } from "../types/types";
+// CAMBIO CRÍTICO: 'l' minúscula para la importación
+import styles from './listado.module.css'; 
 
 interface ListadoProps {
   businesses: Negocio[];
@@ -9,19 +11,20 @@ interface ListadoProps {
 
 const Listado: React.FC<ListadoProps> = ({ businesses, loading }) => {
   return (
-    <div className="results-container">
+    // Aplicación de la clase del módulo
+    <div className={styles.listContainer}> 
       {loading && <p className="ion-text-center">Cargando...</p>}
       {!loading && businesses.length > 0 && (
         <IonList>
-  {businesses.map((business) => (
-    <IonItem
-      key={business.id}
-      routerLink={`/negocio/${business.id}`}
-    >
-      {business.nombre}
-    </IonItem>
-  ))}
-</IonList>
+          {businesses.map((business) => (
+            <IonItem
+              key={business.id}
+              routerLink={`/negocio/${business.id}`}
+            >
+              {business.nombre}
+            </IonItem>
+          ))}
+        </IonList>
       )}
       {!loading && businesses.length === 0 && (
         <p className="ion-text-center">No hay negocios para mostrar.</p>

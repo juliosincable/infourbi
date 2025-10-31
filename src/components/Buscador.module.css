@@ -1,17 +1,21 @@
-/* src/components/Buscador/Buscador.module.css */
+/* buscador.module.css */
 
-.searchContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+/* Clase para aplicar el estilo al contenedor del buscador */
+.searchBox {
+  /* Fondo azul claro */
+  background-color: #90E0EF; 
+  
+  /* Bordes redondeados */
+  border-radius: 12px;
+  
+  /* Relleno interior */
   padding: 20px;
-  background-color: var(--ion-color-light);
-  border-radius: 10px;
-  box-shadow: var(--box-shadow);
+  
+  /* Sombra sutil */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  
+ 
 }
 
-.searchLabel {
-  font-weight: bold;
-  color: var(--ion-color-dark);
-}
+/* Nota: Tu componente ya está usando .search-container en la línea 7 para un div interno, 
+   lo dejamos para que los estilos internos sigan funcionando si los tienes definidos. */

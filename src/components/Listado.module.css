@@ -1,0 +1,19 @@
+/* listado.module.css */
+
+/* Estilo que aplica el fondo azul claro, bordes y relleno al contenedor principal del listado */
+.listContainer {
+  /* Fondo azul claro (el mismo color: #e0f7ff) */
+  background-color: #90E0EF; 
+  
+  /* Bordes redondeados */
+  border-radius: 12px;
+  
+  /* Relleno interior para separar el contenido de los bordes */
+  padding: 15px; 
+  
+  /* Sombra sutil para dar un efecto de elevación */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  
+  /* Margen en la parte superior e inferior para separarlo */
+  
+}

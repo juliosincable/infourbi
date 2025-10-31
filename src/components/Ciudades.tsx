@@ -12,7 +12,9 @@ interface CiudadesProps {
 
 const Ciudades: React.FC<CiudadesProps> = ({ currentCity, showCityMenu, setShowCityMenu, setCurrentCity }) => {
   return (
-    <>
+    // INICIO DEL CONTENEDOR CON ESTILOS: Reemplaza <>
+    <div className={styles.cityContainer}> 
+      
       {/* 2. Usa las clases del módulo */}
       <h1 className={`${styles.centeredText} ${styles.boldText}`}>{currentCity}</h1>
       <div className={`${styles.centeredText} ${styles.marginBottom16}`}>
@@ -43,7 +45,8 @@ const Ciudades: React.FC<CiudadesProps> = ({ currentCity, showCityMenu, setShowC
           },
         ]}
       ></IonActionSheet>
-    </>
+    {/* FIN DEL CONTENEDOR: Reemplaza </> */}
+    </div> 
   );
 };
 

@@ -1,4 +1,6 @@
-/* src/components/Ciudades/Ciudades.module.css */
+/* Ciudades.module.css */
+
+/* Estilos de centrado que ya se estaban usando en el componente */
 .centeredText {
   text-align: center;
 }
@@ -9,4 +11,19 @@
 
 .marginBottom16 {
   margin-bottom: 16px;
+}
+
+/* Nuevo estilo para el fondo azul y bordes redondeados */
+.cityContainer {
+  /* Fondo azul claro */
+  background-color: #90E0EF; 
+  
+  /* Bordes redondeados */
+  border-radius: 12px;
+  
+  /* Relleno interior */
+  padding: 20px;
+  
+  /* Sombra opcional para dar profundidad */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
