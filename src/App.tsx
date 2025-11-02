@@ -2,6 +2,7 @@ import { setupIonicReact } from '@ionic/react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
+import React, { Suspense } from 'react';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -23,9 +24,9 @@ import '@ionic/react/css/display.css';
 import './theme/variables.css';
 
 /* Importa tus páginas aquí */
-import Home from './pages/Home';
-import Prueba from './pages/Prueba';
-import PaginaDetalleNegocio from './components/PaginaDetalleNegocio'; // Importa la nueva página
+const Home = React.lazy(() => import('./pages/Home'));
+const Prueba = React.lazy(() => import('./pages/Prueba'));
+const PaginaDetalleNegocio = React.lazy(() => import('./pages/PaginaDetalleNegocio')); // Importa la nueva página
 
 // Configura Ionic React
 setupIonicReact();
@@ -37,10 +38,12 @@ const App: React.FC = () => {
         <IonSplitPane contentId="main">
           {/* Si tienes un componente Menu, asegúrate de importarlo en esta ubicación o eliminar este componente. */}
           <IonRouterOutlet id="main">
-            <Route path="/home" component={Home} exact={true} />
-            <Route path="/prueba" component={Prueba} exact={true} />
-            <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
-            <Route exact path="/" render={() => <Redirect to="/home" />} />
+            <Suspense fallback={<div>Loading...</div>}>
+              <Route path="/home" component={Home} exact={true} />
+              <Route path="/prueba" component={Prueba} exact={true} />
+              <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
+              <Route exact path="/" render={() => <Redirect to="/home" />} />
+            </Suspense>
           </IonRouterOutlet>
         </IonSplitPane>
       </IonReactRouter>

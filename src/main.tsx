@@ -5,12 +5,16 @@ import './theme/variables.css';
 
 
 
+import ErrorBoundary from './components/ErrorBoundary';
+
 const container = document.getElementById('root');
 const root = createRoot(container!);
 
 root.render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>
 );
 

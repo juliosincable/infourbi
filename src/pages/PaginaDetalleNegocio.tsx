@@ -13,8 +13,8 @@ import {
 } from "@ionic/react";
 import { personCircleSharp } from "ionicons/icons";
 import { Negocio } from "../types/types";
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from "../service/firebaseConfig";
+import { getDocumentById } from "../service/database";
+import { negociosCollection } from "../service/database";
 import styles from "./PaginaDetalleNegocio.module.css";
 
 const PaginaDetalleNegocio: React.FC = () => {
@@ -29,15 +29,8 @@ const PaginaDetalleNegocio: React.FC = () => {
         return;
       }
       try {
-        const docRef = doc(db, "negocios", id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setNegocio(docSnap.data() as Negocio);
-        } else {
-          console.log("No se encontró el documento!");
-          setNegocio(null);
-        }
+        const negocioData = await getDocumentById(negociosCollection, id);
+        setNegocio(negocioData);
       } catch (e) {
         console.error("Error al obtener el documento: ", e);
       } finally {

@@ -19,6 +19,7 @@ import {
   Query,
   QueryDocumentSnapshot,
   DocumentSnapshot,
+  WhereFilterOp, // Importamos el tipo para el operador where
 } from "firebase/firestore";
 
 import {
@@ -33,6 +34,13 @@ import {
   PaginationOptions,
 } from "../types/types";
 
+// --- TIPOS ADICIONALES PARA LA CONSULTA GENÉRICA ---
+export type WhereClause = {
+  field: string;
+  operator: WhereFilterOp;
+  value: unknown;
+};
+
 // --- CONVERSOR DE DATOS GENÉRICO ---
 const createConverter = <
   T extends { id?: string }
@@ -45,6 +53,7 @@ const createConverter = <
     const data = snapshot.data();
     for (const key in data) {
       if (data[key]?.toDate && typeof data[key].toDate === "function") {
+        // Conversión de Firebase Timestamp a JavaScript Date
         data[key] = data[key].toDate();
       }
     }
@@ -82,8 +91,13 @@ export const ciudadesCollection = collection(db, "ciudades").withConverter(
 );
 
 // --- OPERACIONES CRUD GENÉRICAS ---
-export const getDocuments = async <T extends { id?: string }>(
+
+/**
+ * Función genérica para obtener documentos con filtros WHERE y opciones de paginación.
+ */
+export const queryDocuments = async <T extends { id?: string }>(
   collectionRef: CollectionReference<T>,
+  whereClauses: WhereClause[] = [],
   pagination?: PaginationOptions
 ): Promise<{
   data: T[];
@@ -92,6 +106,13 @@ export const getDocuments = async <T extends { id?: string }>(
   try {
     let q: Query<T> = query(collectionRef);
 
+    // 1. Aplicar filtros WHERE
+    whereClauses.forEach((clause) => {
+      // Se ha eliminado el comentario @ts-expect-error ya que el error no se produce.
+      q = query(q, where(clause.field, clause.operator, clause.value));
+    });
+
+    // 2. Aplicar opciones de paginación
     if (pagination) {
       if (pagination.orderByField) {
         q = query(
@@ -116,9 +137,24 @@ export const getDocuments = async <T extends { id?: string }>(
 
     return { data, lastVisible };
   } catch (error) {
-    console.error("Error al obtener documentos:", error);
-    throw new Error("No se pudieron obtener los documentos.");
+    console.error("Error al ejecutar la consulta con filtros:", error);
+    throw new Error(`Error al ejecutar la consulta con filtros: ${error instanceof Error ? error.message : String(error)}`);
   }
+};
+
+/**
+ * Función que obtiene todos los documentos de una colección (ahora usa queryDocuments sin filtros).
+ * Se mantiene para compatibilidad y para llamadas simples sin filtros.
+ */
+export const getDocuments = async <T extends { id?: string }>(
+  collectionRef: CollectionReference<T>,
+  pagination?: PaginationOptions
+): Promise<{
+  data: T[];
+  lastVisible: DocumentSnapshot<DocumentData> | null;
+}> => {
+  // Llama a queryDocuments pasando un array de filtros vacío.
+  return queryDocuments(collectionRef, [], pagination);
 };
 
 export const getDocumentById = async <T extends { id?: string }>(
@@ -131,7 +167,7 @@ export const getDocumentById = async <T extends { id?: string }>(
     return docSnap.exists() ? docSnap.data() : null;
   } catch (error) {
     console.error(`Error al obtener el documento con ID '${id}':`, error);
-    throw new Error("No se pudo obtener el documento.");
+    throw new Error(`Error al obtener el documento con ID '${id}': ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -147,7 +183,7 @@ export const addDocument = async <T extends { id?: string }>(
     return docRef.id;
   } catch (error) {
     console.error("Error al agregar un nuevo documento:", error);
-    throw new Error("No se pudo agregar el documento.");
+    throw new Error(`Error al agregar un nuevo documento: ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -161,7 +197,7 @@ export const updateDocument = async <T extends { id?: string }>(
     await updateDoc(docRef, data as DocumentData);
   } catch (error) {
     console.error(`Error al actualizar el documento con ID '${id}':`, error);
-    throw new Error("No se pudo actualizar el documento.");
+    throw new Error(`Error al actualizar el documento con ID '${id}': ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
@@ -173,59 +209,93 @@ export const deleteDocument = async <T extends { id?: string }>(
     await deleteDoc(doc(collectionRef, id));
   } catch (error) {
     console.error(`Error al eliminar el documento con ID '${id}':`, error);
-    throw new Error("No se pudo eliminar el documento.");
+    throw new Error(`Error al eliminar el documento con ID '${id}': ${error instanceof Error ? error.message : String(error)}`);
   }
 };
 
-// --- FUNCIONES ESPECÍFICAS POR ENTIDAD ---
+// --- FUNCIONES ESPECÍFICAS POR ENTIDAD (REFFACTORIZADAS) ---
+
 export const addUser = (data: Omit<Usuario, "id">) =>
   addDocument(usuariosCollection, data);
+
+/**
+ * Simplificado usando la función genérica queryDocuments.
+ */
 export const getUserByEmail = async (email: string) => {
-  const q = query(usuariosCollection, where("correo", "==", email), limit(1));
-  const querySnapshot = await getDocs(q);
-  const docSnap = querySnapshot.docs[0];
-  return docSnap ? docSnap.data() : null;
+  const result = await queryDocuments(usuariosCollection, [
+    { field: "correo", operator: "==", value: email },
+  ]);
+  if (result.data.length > 1) {
+    console.warn(`Se encontraron varios usuarios con el mismo correo electrónico: ${email}`);
+  }
+  // La consulta de un solo documento devuelve un array, tomamos el primero.
+  return result.data[0] || null;
 };
 
 export const addNegocio = (data: Omit<Negocio, "id">) =>
   addDocument(negociosCollection, data);
+
+/**
+ * Simplificado usando la función genérica queryDocuments.
+ */
 export const getNegociosByPropietario = async (propietarioId: string) => {
-  const q = query(
-    negociosCollection,
-    where("propietario_id", "==", propietarioId)
-  );
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => doc.data());
+  const result = await queryDocuments(negociosCollection, [
+    { field: "propietario_id", operator: "==", value: propietarioId },
+  ]);
+  return result.data;
 };
 
 export const addLugar = (data: Omit<Lugar, "id">) =>
   addDocument(lugaresCollection, data);
+
+/**
+ * Simplificado usando la función genérica queryDocuments.
+ */
 export const getLugaresByNegocio = async (negocioId: string) => {
-  const q = query(lugaresCollection, where("negocio_id", "==", negocioId));
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => doc.data());
+  const result = await queryDocuments(lugaresCollection, [
+    { field: "negocio_id", operator: "==", value: negocioId },
+  ]);
+  return result.data;
 };
 
 export const addEvento = (data: Omit<Evento, "id">) =>
   addDocument(eventosCollection, data);
+
+/**
+ * Simplificado usando la función genérica queryDocuments.
+ */
 export const getEventosByLugar = async (lugarId: string) => {
-  const q = query(
+  const result = await queryDocuments(
     eventosCollection,
-    where("lugar_id", "==", lugarId),
-    orderBy("fecha", "asc")
+    [
+      { field: "lugar_id", operator: "==", value: lugarId },
+    ],
+    {
+      // Se mantiene el ordenamiento específico de la entidad
+      orderByField: "fecha",
+      orderDirection: "asc",
+    }
   );
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => doc.data());
+  return result.data;
 };
 
 export const addProducto = (data: Omit<Producto, "id">) =>
   addDocument(productosCollection, data);
+
+/**
+ * Simplificado usando la función genérica queryDocuments.
+ */
 export const getProductosByNegocio = async (negocioId: string) => {
-  const q = query(
+  const result = await queryDocuments(
     productosCollection,
-    where("negocio_id", "==", negocioId),
-    orderBy("nombre", "asc")
+    [
+      { field: "negocio_id", operator: "==", value: negocioId },
+    ],
+    {
+      // Se mantiene el ordenamiento específico de la entidad
+      orderByField: "nombre",
+      orderDirection: "asc",
+    }
   );
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => doc.data());
+  return result.data;
 };

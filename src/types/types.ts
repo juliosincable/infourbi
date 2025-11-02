@@ -65,7 +65,7 @@ export interface Producto {
 }
 
 export interface PaginationOptions {
-  pageSize: number;
+  pageSize?: number; // Propiedad corregida a opcional para evitar el error TS2345
   startAfterDoc?: DocumentSnapshot<DocumentData>;
   orderByField?: string;
   orderDirection?: 'asc' | 'desc';
