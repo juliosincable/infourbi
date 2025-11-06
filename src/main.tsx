@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './theme/variables.css';
+import './theme/variables.scss';
 
 
 

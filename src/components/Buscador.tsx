@@ -1,7 +1,7 @@
 import React from "react";
 import { IonButton, IonInput } from "@ionic/react";
 // CORRECCIÓN CRÍTICA: Importación de 'styles' ahora en minúsculas
-import styles from "./buscador.module.css";
+import styles from "./Buscador.module.scss";
 
 const Buscador: React.FC = () => {
   return (

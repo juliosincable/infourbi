@@ -12,10 +12,10 @@ import {
 } from '@ionic/react';
 import CreadorNegocios from '../components/CreadorNegocios';
 import CreadorUbicaciones from '../components/CreadorUbicaciones';
-import '../theme/variables.css';
+import '../theme/variables.scss';
 
 // 1. Importa el módulo CSS
-import styles from './Prueba.module.css';
+import styles from './Prueba.module.scss';
 
 const Prueba: React.FC = () => {
   return (

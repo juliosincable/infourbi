@@ -15,7 +15,7 @@ import { personCircleSharp } from "ionicons/icons";
 import { Negocio } from "../types/types";
 import { getDocumentById } from "../service/database";
 import { negociosCollection } from "../service/database";
-import styles from "./PaginaDetalleNegocio.module.css";
+import styles from "./PaginaDetalleNegocio.module.scss";
 
 const PaginaDetalleNegocio: React.FC = () => {
   const { id } = useParams<{ id: string }>();

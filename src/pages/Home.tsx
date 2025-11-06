@@ -14,8 +14,8 @@ import {
   IonCol,        // <-- Importa IonCol
 } from "@ionic/react";
 import { useHistory } from "react-router-dom";
-import "../theme/variables.css";
-import styles from "./Home.module.css";
+import "../theme/variables.scss";
+import styles from "./Home.module.scss";
 
 import { Negocio } from "../types/types";
 import { negociosCollection } from "../service/database";

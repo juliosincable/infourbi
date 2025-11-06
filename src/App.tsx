@@ -21,7 +21,7 @@ import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
 /* Theme variables */
-import './theme/variables.css';
+import './theme/variables.scss';
 
 /* Importa tus páginas aquí */
 const Home = React.lazy(() => import('./pages/Home'));

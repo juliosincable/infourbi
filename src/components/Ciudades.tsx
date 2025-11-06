@@ -1,7 +1,7 @@
 import React from 'react';
 import { IonButton, IonActionSheet } from '@ionic/react';
 // 1. Importa el módulo CSS
-import styles from './Ciudades.module.css';
+import styles from './Ciudades.module.scss';
 
 interface CiudadesProps {
   currentCity: string;

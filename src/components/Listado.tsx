@@ -2,7 +2,7 @@ import React from "react";
 import { IonList, IonItem } from "@ionic/react";
 import { Negocio } from "../types/types";
 // CAMBIO CRÍTICO: 'l' minúscula para la importación
-import styles from './listado.module.css'; 
+import styles from './Listado.module.scss'; 
 
 interface ListadoProps {
   businesses: Negocio[];
