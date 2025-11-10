@@ -1,9 +1,18 @@
 import { setupIonicReact } from '@ionic/react';
 import { Redirect, Route } from 'react-router-dom';
-import { IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/react';
+import { 
+  IonApp, 
+  IonIcon, 
+  IonLabel, 
+  IonRouterOutlet, 
+  IonTabBar, 
+  IonTabButton, 
+  IonTabs 
+} from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import React, { Suspense } from 'react';
 import { ThemeProvider } from './theme/ThemeProvider';
+import { home as homeIcon, apps as appsIcon } from 'ionicons/icons';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -37,17 +46,33 @@ const App: React.FC = () => {
     <ThemeProvider>
       <IonApp>
         <IonReactRouter>
-          <IonSplitPane contentId="main">
-            {/* Si tienes un componente Menu, asegúrate de importarlo en esta ubicación o eliminar este componente. */}
-            <IonRouterOutlet id="main">
-              <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<div>Loading...</div>}>
+            {/* Implementación de las pestañas (IonTabs) */}
+            <IonTabs>
+              <IonRouterOutlet>
+                {/* Rutas para las pestañas y la ruta de detalle */}
                 <Route path="/home" component={Home} exact={true} />
                 <Route path="/prueba" component={Prueba} exact={true} />
                 <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
                 <Route exact path="/" render={() => <Redirect to="/home" />} />
-              </Suspense>
-            </IonRouterOutlet>
-          </IonSplitPane>
+              </IonRouterOutlet>
+              
+              {/* Barra de pestañas en la parte inferior */}
+              <IonTabBar slot="bottom">
+                
+                <IonTabButton tab="home" href="/home">
+                  <IonIcon icon={homeIcon} />
+                  <IonLabel>Home</IonLabel>
+                </IonTabButton>
+                
+                <IonTabButton tab="prueba" href="/prueba">
+                  <IonIcon icon={appsIcon} />
+                  <IonLabel>Prueba</IonLabel>
+                </IonTabButton>
+                
+              </IonTabBar>
+            </IonTabs>
+          </Suspense>
         </IonReactRouter>
       </IonApp>
     </ThemeProvider>
