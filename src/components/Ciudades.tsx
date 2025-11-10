@@ -1,52 +1,53 @@
-import React from 'react';
-import { IonButton, IonActionSheet } from '@ionic/react';
-// 1. Importa el módulo CSS
+import React, { useState, useEffect } from 'react';
 import styles from './Ciudades.module.scss';
 
-interface CiudadesProps {
-  currentCity: string;
-  showCityMenu: boolean;
-  setShowCityMenu: (value: boolean) => void;
-  setCurrentCity: (city: string) => void;
-}
+const Ciudades: React.FC = () => {
+  // Estado para almacenar la ciudad seleccionada
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
-const Ciudades: React.FC<CiudadesProps> = ({ currentCity, showCityMenu, setShowCityMenu, setCurrentCity }) => {
+  // 1. Al montarse, revisar localStorage para obtener la ciudad guardada
+  useEffect(() => {
+    const cityFromStorage = localStorage.getItem('selectedCity');
+    if (cityFromStorage) {
+      setSelectedCity(cityFromStorage);
+    }
+  }, []); // El array vacío asegura que esto se ejecute solo una vez, al montar el componente
+
+  // 5. Función para manejar el cambio de ciudad en el menú
+  const handleCityChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const city = event.target.value;
+    if (city) {
+      setSelectedCity(city);
+      localStorage.setItem('selectedCity', city); // Guardar en localStorage
+    }
+  };
+
   return (
-    // INICIO DEL CONTENEDOR CON ESTILOS: Reemplaza <>
-    <div className={styles.cityContainer}> 
-      
-      {/* 2. Usa las clases del módulo */}
-      <h1 className={`${styles.centeredText} ${styles.boldText}`}>{currentCity}</h1>
-      <div className={`${styles.centeredText} ${styles.marginBottom16}`}>
-        <IonButton onClick={() => setShowCityMenu(true)}>
-          Seleccionar ciudad
-        </IonButton>
-      </div>
-      <IonActionSheet
-        isOpen={showCityMenu}
-        onDidDismiss={() => setShowCityMenu(false)}
-        header="Selecciona una ciudad"
-        buttons={[
-          {
-            text: "Turmero",
-            handler: () => setCurrentCity("Turmero"),
-          },
-          {
-            text: "Maracay",
-            handler: () => setCurrentCity("Maracay"),
-          },
-          {
-            text: "Cagua",
-            handler: () => setCurrentCity("Cagua"),
-          },
-          {
-            text: "Cancelar",
-            role: "cancel",
-          },
-        ]}
-      ></IonActionSheet>
-    {/* FIN DEL CONTENEDOR: Reemplaza </> */}
-    </div> 
+    <div className={`${styles.cityContainer} ${styles.centeredText}`}>
+      {/* 3. Si hay una ciudad guardada, mostrarla */}
+      {selectedCity ? (
+        <h1 className={styles.boldText}>Ciudad {selectedCity}</h1>
+      ) : (
+        // 2. Si no hay ciudad, mostrar un texto indicativo
+        <div className={styles.marginBottom16}>
+          <strong>Escoger ciudad</strong>
+        </div>
+      )}
+
+      {/* 4. Menú dropdown para seleccionar la ciudad */}
+      <select 
+        value={selectedCity || ""} 
+        onChange={handleCityChange}
+      >
+        {/* Opción por defecto que actúa como placeholder */}
+        {!selectedCity && <option value="" disabled>Selecciona una ciudad</option>}
+        
+        {/* Opciones de ciudades */}
+        <option value="Turmero">Turmero</option>
+        <option value="Maracay">Maracay</option>
+        <option value="Cagua">Cagua</option>
+      </select>
+    </div>
   );
 };
 

@@ -30,16 +30,6 @@ const Home = () => {
   const history = useHistory();
   const [businesses, setBusinesses] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showCityMenu, setShowCityMenu] = useState(false);
-  const [currentCity, setCurrentCity] = useState("Selecciona una ciudad");
-
-  // Nuevo efecto para cargar la ciudad desde localStorage al iniciar la app
-  useEffect(() => {
-    const storedCity = localStorage.getItem("selectedCity");
-    if (storedCity) {
-      setCurrentCity(storedCity);
-    }
-  }, []);
 
   useEffect(() => {
     // Lee la coleccion 'negocios' y muestra todos los nombres
@@ -66,12 +56,6 @@ const Home = () => {
     history.push("/prueba");
   };
 
-  // Función para manejar el cambio de ciudad y guardarla en localStorage
-  const handleSetCity = (city: string) => {
-    setCurrentCity(city);
-    localStorage.setItem("selectedCity", city);
-  };
-
   return (
     <IonPage>
       <IonHeader>
@@ -87,12 +71,7 @@ const Home = () => {
           <IonRow className="ion-justify-content-center ion-align-items-center">
             <IonCol size="12">
               <div className={styles['home-container']}>
-                <Ciudades
-                  currentCity={currentCity}
-                  showCityMenu={showCityMenu}
-                  setShowCityMenu={setShowCityMenu}
-                  setCurrentCity={handleSetCity}
-                />
+                <Ciudades />
                 <Buscador />
                 <Listado businesses={businesses} loading={loading} />
               </div>

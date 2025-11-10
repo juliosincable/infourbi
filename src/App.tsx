@@ -3,6 +3,7 @@ import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import React, { Suspense } from 'react';
+import { ThemeProvider } from './theme/ThemeProvider';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -33,21 +34,23 @@ setupIonicReact();
 
 const App: React.FC = () => {
   return (
-    <IonApp className="ion-app-light">
-      <IonReactRouter>
-        <IonSplitPane contentId="main">
-          {/* Si tienes un componente Menu, asegúrate de importarlo en esta ubicación o eliminar este componente. */}
-          <IonRouterOutlet id="main">
-            <Suspense fallback={<div>Loading...</div>}>
-              <Route path="/home" component={Home} exact={true} />
-              <Route path="/prueba" component={Prueba} exact={true} />
-              <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
-              <Route exact path="/" render={() => <Redirect to="/home" />} />
-            </Suspense>
-          </IonRouterOutlet>
-        </IonSplitPane>
-      </IonReactRouter>
-    </IonApp>
+    <ThemeProvider>
+      <IonApp>
+        <IonReactRouter>
+          <IonSplitPane contentId="main">
+            {/* Si tienes un componente Menu, asegúrate de importarlo en esta ubicación o eliminar este componente. */}
+            <IonRouterOutlet id="main">
+              <Suspense fallback={<div>Loading...</div>}>
+                <Route path="/home" component={Home} exact={true} />
+                <Route path="/prueba" component={Prueba} exact={true} />
+                <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
+                <Route exact path="/" render={() => <Redirect to="/home" />} />
+              </Suspense>
+            </IonRouterOutlet>
+          </IonSplitPane>
+        </IonReactRouter>
+      </IonApp>
+    </ThemeProvider>
   );
 };
 
