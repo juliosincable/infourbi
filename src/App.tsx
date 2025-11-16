@@ -34,7 +34,8 @@ import '@ionic/react/css/display.css';
 import './theme/variables.scss';
 
 /* Importa tus páginas aquí */
-const Home = React.lazy(() => import('./pages/Home'));
+// const Home = React.lazy(() => import('./pages/Home')); // <-- Comentado
+import Home from './pages/Home'; // <-- CAMBIO CLAVE: Importación directa
 const Prueba = React.lazy(() => import('./pages/Prueba'));
 const PaginaDetalleNegocio = React.lazy(() => import('./pages/PaginaDetalleNegocio')); // Importa la nueva página
 

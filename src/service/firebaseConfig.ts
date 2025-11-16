@@ -1,11 +1,11 @@
-import { initializeApp } from "firebase/app";
+// Importamos las funciones necesarias para la inicialización y la corrección del bug.
+import { initializeApp, getApps, getApp } from "firebase/app"; 
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage"; // <-- Importación agregada
+import { getFirestore } from "firebase/firestore"; // Servicio de Base de Datos
+import { getAuth } from "firebase/auth";           // Servicio de Autenticación
+import { getStorage } from "firebase/storage";     // Servicio de Almacenamiento
 
-// La configuración de Firebase utiliza las variables de entorno de Vite.
-// Asegúrate de que todas tus variables VITE_ estén definidas en tu archivo .env
+// 1. Usamos import.meta.env.* para leer tus claves desde tu archivo .env
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
   authDomain: import.meta.env.VITE_AUTH_DOMAIN,
@@ -16,16 +16,14 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_MEASUREMENT_ID,
 };
 
-// Inicializa la aplicación principal de Firebase
-const app = initializeApp(firebaseConfig);
+// 2. CORRECCIÓN CRÍTICA: Inicializa Firebase ÚNICAMENTE si no existe una instancia.
+// ESTO ELIMINA EL ERROR FATAL DE DUPLICACIÓN (app/duplicate-app).
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Inicializa y exporta las instancias de los servicios
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const storage = getStorage(app); // <-- Inicialización y exportación de Storage
+export const storage = getStorage(app); 
+const analytics = getAnalytics(app);
 
-// Opcional: Inicializa Analytics (útil para seguimiento del uso)
-export const analytics = getAnalytics(app);
-
-// Exporta la app en caso de que necesites inicializar otros servicios o usarla directamente
 export default app;
