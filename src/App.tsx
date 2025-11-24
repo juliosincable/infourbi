@@ -1,4 +1,5 @@
 import { setupIonicReact } from "@ionic/react";
+// Importaciones clave de React Router v5 (Route y Redirect son correctas)
 import { Redirect, Route } from "react-router-dom";
 import {
   IonApp,
@@ -9,10 +10,11 @@ import {
   IonTabButton,
   IonTabs,
 } from "@ionic/react";
-import { IonReactRouter } from "@ionic/react-router";
+// IonReactRouter utiliza internamente React Router.
+import { IonReactRouter } from "@ionic/react-router"; 
 import React, { Suspense } from "react";
 import { ThemeProvider } from "./theme/ThemeProvider";
-import { AuthProvider } from "./context/AuthProvider";
+import { AuthProvider } from "./context/Auth";
 import {
   home as homeIcon,
   apps as appsIcon,
@@ -42,10 +44,9 @@ import "./theme/variables.scss";
 /* IMPORTACIÓN DE PÁGINAS Y WRAPPERS DE RUTA */
 /* ========================================= */
 
-// Componentes Wrappers de Rutas 👈 IMPORTACIONES REALES
-import PrivateRoute from "./router/PrivateRoute";
-import AnonymousRoute from "./router/AnonymousRoute";
-
+// Componentes Wrappers de Rutas (Asumen sintaxis v5 internamente)
+import { PrivateRoute } from "./router/PrivateRoute";
+import { AnonymousRoute } from "./router/AnonymousRoute";
 // Rutas Públicas/Privadas (Usando React.lazy para consistencia y code splitting)
 const Home = React.lazy(() => import("./pages/Home"));
 const Prueba = React.lazy(() => import("./pages/Prueba"));
@@ -71,25 +72,26 @@ const App: React.FC = () => {
             <Suspense fallback={<div>Cargando...</div>}>
               <IonRouterOutlet id="main">
                 {/* 1. RUTAS ANÓNIMAS (NO TABS) */}
-                {/* Solo accesible si el usuario NO está autenticado. Si lo está, redirige a /home. */}
+                {/* Usa 'component' y 'exact', sintaxis de React Router v5 */}
                 <AnonymousRoute path="/login" component={Login} exact={true} />
 
                 {/* 2. RUTAS PRIVADAS/PÚBLICAS SIN PESTAÑAS (Ej: Perfil, Detalle) */}
-                {/* Solo accesible si el usuario SÍ está autenticado. Si no, redirige a /login. */}
+                {/* Usa 'component' y 'exact', sintaxis de React Router v5 */}
                 <PrivateRoute
                   path="/profile"
                   component={Profile}
                   exact={true}
                 />
                 
-                {/* La ruta de detalle puede ser pública */}
+                {/* Ruta de detalle pública, sintaxis de React Router v5 */}
                 <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
 
                 {/* 3. ESTRUCTURA DE PESTAÑAS (TABS) */}
+                {/* Esto es un patrón común de Ionic/React Router v5 */}
                 <Route path="/:tab(home|prueba)">
                   <IonTabs>
                     <IonRouterOutlet>
-                      {/* Rutas con Pestañas: Usamos PrivateRoute para protegerlas */}
+                      {/* Rutas con Pestañas: Usamos PrivateRoute con sintaxis v5 */}
                       <PrivateRoute path="/home" component={Home} exact={true} />
                       <PrivateRoute
                         path="/prueba"
@@ -97,7 +99,7 @@ const App: React.FC = () => {
                         exact={true}
                       />
                       
-                      {/* Redirección por defecto dentro del contexto de Tabs si se accede a la raíz */}
+                      {/* Redirección por defecto dentro del contexto de Tabs. Sintaxis v5 con render. */}
                       <Route
                         exact
                         path="/"
@@ -126,7 +128,7 @@ const App: React.FC = () => {
                   </IonTabs>
                 </Route>
 
-                {/* 4. FALLBACK GENERAL: Si se accede a la raíz */}
+                {/* 4. FALLBACK GENERAL: Si se accede a la raíz. Sintaxis v5 con render. */}
                 <Route exact path="/" render={() => <Redirect to="/home" />} />
 
               </IonRouterOutlet>

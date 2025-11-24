@@ -1,28 +1,55 @@
-// Archivo: ./src/pages/Profile.tsx
+// Archivo: src/pages/Profile.tsx
 
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonButton } from '@ionic/react';
 import React from 'react';
-// 👈 ¡ESTA ES LA LÍNEA CRÍTICA QUE DEBES CAMBIAR!
-// Debe importar desde AuthContext, no desde AuthProvider.
-import { useAuth } from '../context/AuthContext'; 
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel } from '@ionic/react';
+// ❌ ANTES: import { useAuth } from '../context/Auth';
+// ✅ CORRECCIÓN: Ahora importamos useAuth desde el archivo de definiciones.
+import { useAuth } from '../context/AuthDefinitions'; 
+import { useHistory } from 'react-router-dom';
 
 const Profile: React.FC = () => {
-  const { logout, currentUser } = useAuth(); 
+  const { currentUser, logout } = useAuth();
+  const history = useHistory();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Redirige al usuario a la página de login o a la home page después del logout
+      history.push('/login');
+      console.log('Usuario ha cerrado sesión');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Perfil Privado</IonTitle>
+          <IonTitle>Perfil de Usuario</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
-        <h1>Perfil de Usuario</h1>
-        <p>Esta es una ruta privada. Solo visible si estás autenticado.</p>
-        {currentUser && <p>Bienvenido: **{currentUser.email}**</p>}
-        <IonButton expand="full" color="danger" onClick={logout}>
-          Cerrar Sesión
-        </IonButton>
+        <IonCard>
+          <IonCardHeader>
+            <IonCardTitle>Información del Usuario</IonCardTitle>
+          </IonCardHeader>
+          <IonCardContent>
+            {currentUser ? (
+              <IonItem>
+                <IonLabel>
+                  <h2>Email</h2>
+                  <p>{currentUser.email}</p>
+                </IonLabel>
+              </IonItem>
+            ) : (
+              <p>No hay información del usuario disponible.</p>
+            )}
+            <IonButton expand="block" onClick={handleLogout} color="danger" style={{ marginTop: '20px' }}>
+              Cerrar Sesión
+            </IonButton>
+          </IonCardContent>
+        </IonCard>
       </IonContent>
     </IonPage>
   );

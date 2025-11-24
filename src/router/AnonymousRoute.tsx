@@ -1,26 +1,48 @@
-import React from 'react';
-import { Route, Redirect, RouteProps } from 'react-router-dom';
-import { useAuth } from '../context/useAuth';
+// Archivo: src/router/AnonymousRoute.tsx (FINALMENTE CORREGIDO y limpio)
 
+import React from 'react';
+// Importaciones de React Router v5
+import { Route, Redirect, RouteProps, RouteComponentProps } from 'react-router-dom'; 
+
+// ✅ CORRECCIÓN TS2305: Apuntamos a la nueva ubicación del hook después del refactoring.
+import { useAuth } from '../context/AuthDefinitions'; 
+
+import { IonSpinner } from '@ionic/react';
+
+// Tipamos los props de ruta de v5 para eliminar errores TS2559 y ESLint.
+// Usamos 'object' para evitar el warning '@typescript-eslint/no-empty-object-type'.
+type AnonymousRouteComponentProps = RouteComponentProps<object>;
+
+// Definimos los props que acepta AnonymousRoute.
 interface AnonymousRouteProps extends RouteProps {
-  component: React.ComponentType<any>;
+  component: React.ComponentType<AnonymousRouteComponentProps>; 
 }
 
-const AnonymousRoute: React.FC<AnonymousRouteProps> = ({ component: Component, ...rest }) => {
-  const { currentUser } = useAuth();
+export const AnonymousRoute: React.FC<AnonymousRouteProps> = ({ component: Component, ...rest }) => {
+  const { isAuthenticated, loading } = useAuth();
 
   return (
     <Route
       {...rest}
-      render={props =>
-        !currentUser ? (
-          <Component {...props} />
-        ) : (
-          <Redirect to="/prueba" />
-        )
-      }
+      render={(props: AnonymousRouteComponentProps) => { 
+        
+        if (loading) {
+          // Muestra el Spinner de carga
+          return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+              <IonSpinner name="crescent" />
+            </div>
+          );
+        }
+
+        if (isAuthenticated) {
+          // Si está autenticado, redirige a la ruta principal.
+          return <Redirect to="/home" />; 
+        } else {
+          // Si no está autenticado, permite el acceso (ej: Login/Registro).
+          return <Component {...props} />;
+        }
+      }}
     />
   );
 };
-
-export default AnonymousRoute;
