@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styles from './Ciudades.module.scss';
 
-// --- Dependencias de Firebase RESTAURADAS ---
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, User } from 'firebase/auth';
-import { collection, addDoc, onSnapshot, query } from 'firebase/firestore';
-
-// Importaciones de la configuración central de Firebase
+// --- Dependencias de Firebase ---
+import { User } from 'firebase/auth';
+import { collection, addDoc, getDocs, query } from 'firebase/firestore'; 
 import { db, auth } from '../service/firebaseConfig';
+import { signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 
 // --- Definiciones de Tipos de Datos ---
 interface Pais {
@@ -17,151 +16,164 @@ interface Pais {
 interface Estado {
     id: string;
     nombre: string;
-    pais_id: string; // Enlace al País
+    pais_id: string;
 }
 
 interface Ciudad {
-    id:string;
+    id: string;
     nombre: string;
-    estado_id: string; // Enlace al Estado
-    pais_id: string; // Para facilitar consultas y desnormalización
+    estado_id: string;
+    pais_id: string;
 }
 
 type LocationType = 'pais' | 'estado' | 'ciudad';
 
-// --- Globales de Firebase ---
-// Las variables __app_id, __firebase_config y __initial_auth_token son inyectadas en este entorno.
+// --- Globales de Firebase (Declaraciones Asumidas) ---
 declare const __app_id: string;
 declare const __firebase_config: string;
 declare const __initial_auth_token: string;
 
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const appId = (typeof __app_id !== 'undefined' && __app_id.trim() !== '') ? __app_id : 'default-app-id-999';
 const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
 const CREATE_NEW_OPTION = 'CREATE_NEW';
 const LS_KEY_SELECTED_ID = 'firebase_selected_ciudad_id'; 
 
+// ----------------------------------------------------------------------
 // --- Custom Hook para Lógica de Firestore y Estado Centralizado ---
+// ----------------------------------------------------------------------
 
 const useLocationData = (userId: string | null) => {
     const [paises, setPaises] = useState<Pais[]>([]);
     const [estados, setEstados] = useState<Estado[]>([]);
     const [ciudades, setCiudades] = useState<Ciudad[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null); // Estado para el error
+    const [error, setError] = useState<string | null>(null);
 
+    // FUNCIÓN DE RUTA SIMPLIFICADA Y CENTRALIZADA
     const getLocationCollectionPath = useCallback((type: LocationType) => {
-        if (!userId) return '';
         let collectionName;
         switch (type) {
             case 'pais': collectionName = 'paises'; break;
             case 'estado': collectionName = 'estados'; break;
             case 'ciudad': collectionName = 'ciudades'; break;
+            default: throw new Error('Tipo de colección desconocido.');
         }
-        // Ruta de colección privada por usuario, por aplicación
-        return `artifacts/${appId}/users/${userId}/${collectionName}`;
-    }, [userId]);
+        return collectionName; 
+    }, []);
 
-    // Manejar Suscripciones a Datos (onSnapshot)
-    useEffect(() => {
+
+    // --- Función para CARGAR DATOS (fetchLocations) ---
+    const fetchLocations = useCallback(async () => {
+        // [CORRECCIÓN 1 - BLOQUEO DE LECTURA]:
+        // Si userId es null, no se realiza la llamada a Firestore para evitar el error de permisos.
         if (!userId) {
             setLoading(false);
             return;
         }
-        
+
+        setLoading(true);
         setError(null);
-        const cleanupFunctions: (() => void)[] = [];
 
         try {
-            // Suscripción para Países
-            const qPaises = query(collection(db, getLocationCollectionPath('pais')));
-            cleanupFunctions.push(onSnapshot(qPaises, (snapshot) => {
-                const data: Pais[] = snapshot.docs.map(doc => ({ id: doc.id, nombre: doc.data().nombre }));
-                setPaises(data);
-                setLoading(false);
-            }, (err) => {
-                console.error("Error en snapshot de países:", err);
-                setError(`Error al cargar países: ${err.message}`);
-                setLoading(false);
-            }));
+            const pathPaises = getLocationCollectionPath('pais');
+            const pathEstados = getLocationCollectionPath('estado');
+            const pathCiudades = getLocationCollectionPath('ciudad');
 
-            // Suscripción para Estados
-            const qEstados = query(collection(db, getLocationCollectionPath('estado')));
-            cleanupFunctions.push(onSnapshot(qEstados, (snapshot) => {
-                const data: Estado[] = snapshot.docs.map(doc => ({ 
-                    id: doc.id, 
-                    nombre: doc.data().nombre,
-                    pais_id: doc.data().pais_id,
-                }));
-                setEstados(data);
-            }, (err) => {
-                console.error("Error en snapshot de estados:", err);
-                setError(`Error al cargar estados: ${err.message}`);
-            }));
+            // Cargar Países
+            const qPaises = query(collection(db, pathPaises));
+            const snapshotPaises = await getDocs(qPaises);
+            const dataPaises: Pais[] = snapshotPaises.docs.map(doc => ({ id: doc.id, nombre: doc.data().nombre }));
+            setPaises(dataPaises);
 
-            // Suscripción para Ciudades
-            const qCiudades = query(collection(db, getLocationCollectionPath('ciudad')));
-            cleanupFunctions.push(onSnapshot(qCiudades, (snapshot) => {
-                const data: Ciudad[] = snapshot.docs.map(doc => ({ 
-                    id: doc.id, 
-                    nombre: doc.data().nombre,
-                    estado_id: doc.data().estado_id,
-                    pais_id: doc.data().pais_id,
-                }));
-                setCiudades(data);
-            }, (err) => {
-                console.error("Error en snapshot de ciudades:", err);
-                setError(`Error al cargar ciudades: ${err.message}`);
+            // Cargar Estados
+            const qEstados = query(collection(db, pathEstados));
+            const snapshotEstados = await getDocs(qEstados);
+            const dataEstados: Estado[] = snapshotEstados.docs.map(doc => ({ 
+                id: doc.id, 
+                nombre: doc.data().nombre,
+                pais_id: doc.data().pais_id,
             }));
+            setEstados(dataEstados);
+
+            // Cargar Ciudades
+            const qCiudades = query(collection(db, pathCiudades));
+            const snapshotCiudades = await getDocs(qCiudades);
+            const dataCiudades: Ciudad[] = snapshotCiudades.docs.map(doc => ({ 
+                id: doc.id, 
+                nombre: doc.data().nombre,
+                estado_id: doc.data().estado_id,
+                pais_id: doc.data().pais_id,
+            }));
+            setCiudades(dataCiudades);
 
         } catch (err: unknown) {
-            console.error("Error al configurar los listeners de Firestore:", err);
-            setError(`Error de configuración: ${(err as Error).message}`);
+            console.error("Error al cargar documentos de Firestore:", err);
+            // Mensaje de error más detallado
+            setError(`Error de Conexión: ${(err as Error).message}. (El servidor de Firebase denegó la lectura. Verifique la Autenticación/Reglas)`);
+        } finally {
             setLoading(false);
         }
-
-        return () => {
-            cleanupFunctions.forEach(cleanup => cleanup());
-        };
     }, [userId, getLocationCollectionPath]);
 
-    // Operación para Añadir Locación
-    const addLocation = useCallback(async (type: LocationType, data: Record<string, unknown>) => {
-        if (!userId) {
-            throw new Error('Usuario no autenticado.');
+
+    // [CORRECCIÓN 2 - ESPERA EN EL EFECTO]:
+    // Ejecuta la carga de datos SOLO si el userId es válido. Esto soluciona el problema de timing.
+    useEffect(() => {
+        if (userId) { 
+            fetchLocations();
         }
+    }, [userId, fetchLocations]);
+
+
+    // Operación para Añadir Locación (addLocation)
+    const addLocation = async (type: LocationType, data: Record<string, unknown>) => {
+        
         const path = getLocationCollectionPath(type);
+        let newDocId = '';
+        
         try {
             const docRef = await addDoc(collection(db, path), {
                 ...data,
                 nombre: (data.nombre as string).trim(),
             });
-            return docRef.id;
+            newDocId = docRef.id;
+
+            await fetchLocations(); // Recarga los datos inmediatamente
+
+            return newDocId;
         } catch (e) {
-            console.error(`Error al añadir ${type}: `, e);
+            const error = e as Error;
+            console.error(`Error detallado al añadir ${type}: `, error);
+            
+            alert(`🔴 ¡ERROR CRÍTICO AL GUARDAR! Mensaje: ${error.message}. (Verifique que su UID tenga 'isAdmin: true')`); 
+
             throw new Error(`Fallo al crear la ubicación: ${type}.`);
         }
-    }, [userId, getLocationCollectionPath]);
+    };
 
     return {
         paises,
         estados,
         ciudades,
         loading,
-        error, // Exporta el error
+        error,
         addLocation,
     };
 };
 
+// ----------------------------------------------------------------------
 // --- Componente Raíz de la Aplicación (Ciudades) ---
+// ----------------------------------------------------------------------
 
 const Ciudades: React.FC = () => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [showLoading, setShowLoading] = useState(true);
+    // showLoading debe ser true inicialmente para dar tiempo a Auth
+    const [showLoading, setShowLoading] = useState(true); 
 
-    // 1. Inicialización de Autenticación
+    // 1. Inicialización de Autenticación (Bloque Robusto)
     useEffect(() => {
         const tryAuth = async () => {
             try {
@@ -171,14 +183,18 @@ const Ciudades: React.FC = () => {
                     await signInAnonymously(auth);
                 }
             } catch (e) {
-                console.error('Error durante la autenticación:', e);
+                console.error('Error FATAL durante la autenticación:', e);
+                // Si Auth falla, aún debemos apagar la carga.
+                setShowLoading(false); 
             }
         };
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
+            // [CORRECCIÓN 3]: onAuthStateChanged establece el resultado final de Auth
             setCurrentUser(user);
             setIsAuthenticated(!!user);
-            setShowLoading(false);
+            // Solo apagamos la pantalla de carga cuando Auth ha finalizado.
+            setShowLoading(false); 
         });
 
         tryAuth();
@@ -188,10 +204,10 @@ const Ciudades: React.FC = () => {
     const userId = currentUser ? currentUser.uid : null;
     const { paises, estados, ciudades, loading: dataLoading, error: dataError, addLocation } = useLocationData(userId);
 
-    // 2. Estados de Selección y Creación
+    // 2. Estados de Selección y Creación (El resto del código permanece igual)
     const [selectedPaisId, setSelectedPaisId] = useState<string>('');
     const [selectedEstadoId, setSelectedEstadoId] = useState<string>('');
-    const [selectedCiudadId, setSelectedCiudadId] = useState<string>(''); // La que se guarda en LS
+    const [selectedCiudadId, setSelectedCiudadId] = useState<string>(''); 
     
     const [newPaisName, setNewPaisName] = useState('');
     const [newStateName, setNewStateName] = useState('');
@@ -199,8 +215,8 @@ const Ciudades: React.FC = () => {
     const [showCreationForm, setShowCreationForm] = useState<'pais' | 'estado' | 'ciudad' | null>(null);
 
     // --- EFECTOS DE PERSISTENCIA Y PRECARGA (Ciudad seleccionada) ---
+
     useEffect(() => {
-        // Cargar la última ciudad seleccionada de localStorage
         const cityIdFromStorage = localStorage.getItem(LS_KEY_SELECTED_ID);
         if (cityIdFromStorage && ciudades.length > 0) {
             const ciudad = ciudades.find(c => c.id === cityIdFromStorage);
@@ -210,9 +226,8 @@ const Ciudades: React.FC = () => {
                 setSelectedPaisId(ciudad.pais_id);
             }
         }
-    }, [ciudades, estados, paises]); // Depende de la carga inicial de datos de Firestore
+    }, [ciudades, estados, paises]);
 
-    // Guardar el ID de la ciudad seleccionada en localStorage (persistencia local de la selección)
     useEffect(() => {
         if (selectedCiudadId) {
             localStorage.setItem(LS_KEY_SELECTED_ID, selectedCiudadId);
@@ -261,15 +276,14 @@ const Ciudades: React.FC = () => {
                 const newId = await addLocation('ciudad', { 
                     nombre: newCiudadName.trim(), 
                     estado_id: selectedEstadoId,
-                    pais_id: selectedPaisId, // Guardar el ID del país para la precarga
+                    pais_id: selectedPaisId,
                 });
                 setSelectedCiudadId(newId);
                 setNewCiudadName('');
             }
-            setShowCreationForm(null); // Ocultar el formulario después de crear
+            setShowCreationForm(null);
         } catch (error) {
-            console.error('Error al crear ubicación:', error);
-            alert(`Error al guardar en Firestore. Revisa la consola.`);
+            console.error('Error al crear ubicación, ya alertado:', error);
         }
     }, [newPaisName, newStateName, newCiudadName, selectedPaisId, selectedEstadoId, addLocation]);
 
@@ -308,12 +322,15 @@ const Ciudades: React.FC = () => {
         }
     };
 
+    // --- RENDERING ---
+
     if (dataError) {
         return (
             <div className={`${styles.cityContainer} ${styles.centeredText}`}>
-                <h1 className={styles.boldText} style={{ color: 'red' }}>Error de Base de Datos</h1>
+                <h1 className={styles.boldText} style={{ color: 'red' }}>Error de Conexión</h1>
                 <p style={{ color: 'red' }}>{dataError}</p>
-                <p>Por favor, verifica tus reglas de seguridad en la consola de Firebase.</p>
+                <p>UID actual: {userId || 'N/A'}</p>
+                <p>Por favor, **cierre y reabra** el navegador para un nuevo intento de autenticación.</p>
             </div>
         );
     }
@@ -322,7 +339,6 @@ const Ciudades: React.FC = () => {
         return (
             <div className={`${styles.cityContainer} ${styles.centeredText}`}>
                 <h1 className={styles.boldText}>Conectando a la Base de Datos...</h1>
-                {/* Puedes añadir un spinner o indicador de carga aquí */}
                 <p>Estado de Auth: {isAuthenticated ? 'Autenticado' : 'No Autenticado'}</p>
                 <p>Cargando Datos: {dataLoading ? 'Sí' : 'No'}</p>
                 <p>UID: {userId || 'N/A'}</p>

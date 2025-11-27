@@ -11,7 +11,7 @@ import {
   IonTabs,
 } from "@ionic/react";
 // IonReactRouter utiliza internamente React Router.
-import { IonReactRouter } from "@ionic/react-router"; 
+import { IonReactRouter } from "@ionic/react-router";
 import React, { Suspense } from "react";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import { AuthProvider } from "./context/Auth";
@@ -47,6 +47,10 @@ import "./theme/variables.scss";
 // Componentes Wrappers de Rutas (Asumen sintaxis v5 internamente)
 import { PrivateRoute } from "./router/PrivateRoute";
 import { AnonymousRoute } from "./router/AnonymousRoute";
+
+// Componente LoadingGate importado e implementado como wrapper (PASO 1)
+import LoadingGate from "./router/LoadingGate"; 
+
 // Rutas Públicas/Privadas (Usando React.lazy para consistencia y code splitting)
 const Home = React.lazy(() => import("./pages/Home"));
 const Prueba = React.lazy(() => import("./pages/Prueba"));
@@ -67,74 +71,77 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <IonApp>
-        <AuthProvider>
-          <IonReactRouter>
-            <Suspense fallback={<div>Cargando...</div>}>
-              <IonRouterOutlet id="main">
-                {/* 1. RUTAS ANÓNIMAS (NO TABS) */}
-                {/* Usa 'component' y 'exact', sintaxis de React Router v5 */}
-                <AnonymousRoute path="/login" component={Login} exact={true} />
+        {/* Implementación del componente LoadingGate como wrapper (PASO 2) */}
+        <LoadingGate> 
+          <AuthProvider>
+            <IonReactRouter>
+              <Suspense fallback={<div>Cargando...</div>}>
+                <IonRouterOutlet id="main">
+                  {/* 1. RUTAS ANÓNIMAS (NO TABS) */}
+                  {/* Usa 'component' y 'exact', sintaxis de React Router v5 */}
+                  <AnonymousRoute path="/login" component={Login} exact={true} />
 
-                {/* 2. RUTAS PRIVADAS/PÚBLICAS SIN PESTAÑAS (Ej: Perfil, Detalle) */}
-                {/* Usa 'component' y 'exact', sintaxis de React Router v5 */}
-                <PrivateRoute
-                  path="/profile"
-                  component={Profile}
-                  exact={true}
-                />
-                
-                {/* Ruta de detalle pública, sintaxis de React Router v5 */}
-                <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
+                  {/* 2. RUTAS PRIVADAS/PÚBLICAS SIN PESTAÑAS (Ej: Perfil, Detalle) */}
+                  {/* Usa 'component' y 'exact', sintaxis de React Router v5 */}
+                  <PrivateRoute
+                    path="/profile"
+                    component={Profile}
+                    exact={true}
+                  />
 
-                {/* 3. ESTRUCTURA DE PESTAÑAS (TABS) */}
-                {/* Esto es un patrón común de Ionic/React Router v5 */}
-                <Route path="/:tab(home|prueba)">
-                  <IonTabs>
-                    <IonRouterOutlet>
-                      {/* Rutas con Pestañas: Usamos PrivateRoute con sintaxis v5 */}
-                      <PrivateRoute path="/home" component={Home} exact={true} />
-                      <PrivateRoute
-                        path="/prueba"
-                        component={Prueba}
-                        exact={true}
-                      />
-                      
-                      {/* Redirección por defecto dentro del contexto de Tabs. Sintaxis v5 con render. */}
-                      <Route
-                        exact
-                        path="/"
-                        render={() => <Redirect to="/home" />}
-                      />
-                    </IonRouterOutlet>
+                  {/* Ruta de detalle pública, sintaxis de React Router v5 */}
+                  <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
 
-                    {/* Barra de pestañas en la parte inferior */}
-                    <IonTabBar slot="bottom">
-                      <IonTabButton tab="home" href="/home">
-                        <IonIcon icon={homeIcon} />
-                        <IonLabel>Home</IonLabel>
-                      </IonTabButton>
+                  {/* 3. ESTRUCTURA DE PESTAÑAS (TABS) */}
+                  {/* Esto es un patrón común de Ionic/React Router v5 */}
+                  <Route path="/:tab(home|prueba)">
+                    <IonTabs>
+                      <IonRouterOutlet>
+                        {/* Rutas con Pestañas: Usamos PrivateRoute con sintaxis v5 */}
+                        <PrivateRoute path="/home" component={Home} exact={true} />
+                        <PrivateRoute
+                          path="/prueba"
+                          component={Prueba}
+                          exact={true}
+                        />
 
-                      <IonTabButton tab="prueba" href="/prueba">
-                        <IonIcon icon={appsIcon} />
-                        <IonLabel>Prueba</IonLabel>
-                      </IonTabButton>
-                      
-                      {/* Enlazar la pestaña de perfil a la ruta fuera de Tabs */}
-                      <IonTabButton tab="profile" href="/profile">
-                        <IonIcon icon={personIcon} />
-                        <IonLabel>Perfil</IonLabel>
-                      </IonTabButton>
-                    </IonTabBar>
-                  </IonTabs>
-                </Route>
+                        {/* Redirección por defecto dentro del contexto de Tabs. Sintaxis v5 con render. */}
+                        <Route
+                          exact
+                          path="/"
+                          render={() => <Redirect to="/home" />}
+                        />
+                      </IonRouterOutlet>
 
-                {/* 4. FALLBACK GENERAL: Si se accede a la raíz. Sintaxis v5 con render. */}
-                <Route exact path="/" render={() => <Redirect to="/home" />} />
+                      {/* Barra de pestañas en la parte inferior */}
+                      <IonTabBar slot="bottom">
+                        <IonTabButton tab="home" href="/home">
+                          <IonIcon icon={homeIcon} />
+                          <IonLabel>Home</IonLabel>
+                        </IonTabButton>
 
-              </IonRouterOutlet>
-            </Suspense>
-          </IonReactRouter>
-        </AuthProvider>
+                        <IonTabButton tab="prueba" href="/prueba">
+                          <IonIcon icon={appsIcon} />
+                          <IonLabel>Prueba</IonLabel>
+                        </IonTabButton>
+
+                        {/* Enlazar la pestaña de perfil a la ruta fuera de Tabs */}
+                        <IonTabButton tab="profile" href="/profile">
+                          <IonIcon icon={personIcon} />
+                          <IonLabel>Perfil</IonLabel>
+                        </IonTabButton>
+                      </IonTabBar>
+                    </IonTabs>
+                  </Route>
+
+                  {/* 4. FALLBACK GENERAL: Si se accede a la raíz. Sintaxis v5 con render. */}
+                  <Route exact path="/" render={() => <Redirect to="/home" />} />
+
+                </IonRouterOutlet>
+              </Suspense>
+            </IonReactRouter>
+          </AuthProvider>
+        </LoadingGate>
       </IonApp>
     </ThemeProvider>
   );
