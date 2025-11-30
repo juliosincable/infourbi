@@ -1,9 +1,44 @@
-/* src/pages/Home.module.css */
+/* src/pages/Home.module.scss */
 
+/* 1. CORRECCIÓN DEL IONCOL (Anulación de Padding) */
+/* Anulamos el relleno horizontal (padding) que IonCol añade por defecto. */
+.col-limit {
+  /* Al apuntar a la propiedad de CSS Variables de Ionic, anulamos el padding horizontal */
+  --ion-grid-column-padding-end: 0 !important;
+  --ion-grid-column-padding-start: 0 !important;
+  
+  /* Esto asegura que la columna ocupe exactamente el 100% que le corresponde */
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 2. DEFINICIÓN DEL CONTENEDOR CENTRAL */
 .home-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  
+  /* Reglas de centrado y límite de ancho */
+  width: 100%;
   max-width: 600px;
-  margin: 0 auto; /* <-- Agrega esta línea para centrar el contenedor horizontalmente */
+  margin: 0 auto;
+  
+  /* CRÍTICO: Asegura que padding y border se cuenten DENTRO del ancho */
+  box-sizing: border-box; 
+  
+  /* 💡 Reintroduce el padding interno. Esto te da el espaciado lateral deseado. */
+  padding: 0 16px; 
+}
+
+/* 3. FIX DE FLEXBOX DEL BUSCADOR */
+/* Si el componente Buscador usa Flexbox, un input con 'flex-grow: 1' puede desbordarse. */
+/* Esta regla lo fuerza a encogerse si su contenido o estilos rompen el layout. */
+.home-container input[type="text"],
+.home-container button,
+.home-container select {
+    box-sizing: border-box;
+}
+.home-container input {
+    /* min-width: 0 es el truco estándar de Flexbox para que los inputs se encojan */
+    min-width: 0; 
 }

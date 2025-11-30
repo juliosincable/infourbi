@@ -30,13 +30,13 @@ const Home = () => {
   const history = useHistory();
   const [businesses, setBusinesses] = useState<Negocio[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Estado para el error
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Lee la coleccion 'negocios' y muestra todos los nombres
     const loadAllBusinesses = async () => {
       setLoading(true);
-      setError(null); // Resetea el error
+      setError(null);
       try {
         console.log("Intentando obtener negocios de Firebase...");
         const querySnapshot = await getDocs(negociosCollection);
@@ -73,7 +73,7 @@ const Home = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>infoUrbi</IonTitle>
+          <IonTitle>infourbi</IonTitle>
           <IonButtons slot="end">
             <IonButton onClick={goToPrueba}>Administrar</IonButton>
           </IonButtons>
@@ -82,7 +82,8 @@ const Home = () => {
       <IonContent fullscreen>
         <IonGrid fixed className="ion-text-center">
           <IonRow className="ion-justify-content-center ion-align-items-center">
-            <IonCol size="12">
+            {/* 🛑 CAMBIO CRÍTICO: Añadir la clase 'col-limit' */}
+            <IonCol size="12" className={styles['col-limit']}> 
               <div className={styles['home-container']}>
                 
                 {/* Muestra el error si existe */}
@@ -95,11 +96,8 @@ const Home = () => {
                 )}
 
                 <Ciudades />
-                
-                {/* 💥 PRUEBA DE AISLAMIENTO 2/3: Descomentamos Buscador */}
                 <Buscador />
-                
-                {/* <Listado businesses={businesses} loading={loading} /> */}
+                <Listado businesses={businesses} loading={loading} />
               </div>
             </IonCol>
           </IonRow>
