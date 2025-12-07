@@ -67,14 +67,19 @@ const useLocationData = (userId: string | null) => {
     // --- Función para CARGAR DATOS (fetchLocations) ---
     const fetchLocations = useCallback(async () => {
         // [CORRECCIÓN 1 - BLOQUEO DE LECTURA]:
-        // Si userId es null, no se realiza la llamada a Firestore para evitar el error de permisos.
         if (!userId) {
             setLoading(false);
+            // 📢 1. LOG DE BLOQUEO: Si el userId es null, la función se detiene antes de Firestore.
+            console.log('📢 1. INFO: fetchLocations BLOQUEADA. userId es NULL.');
             return;
         }
 
         setLoading(true);
         setError(null);
+        
+        // 📢 2. LOG DE INICIO DE LECTURA: Se inicia la lectura con un UID válido.
+        console.log('📢 2. INFO: fetchLocations INICIADA con UID:', userId);
+
 
         try {
             const pathPaises = getLocationCollectionPath('pais');
@@ -108,8 +113,13 @@ const useLocationData = (userId: string | null) => {
             }));
             setCiudades(dataCiudades);
 
+            // 📢 3. LOG DE ÉXITO DE LECTURA: Se han cargado los datos.
+            console.log(`📢 3. ÉXITO FIRESTORE: Países cargados: ${dataPaises.length}, Estados: ${dataEstados.length}, Ciudades: ${dataCiudades.length}`);
+
+
         } catch (err: unknown) {
-            console.error("Error al cargar documentos de Firestore:", err);
+            // 📢 4. LOG DE ERROR CRÍTICO: Muestra el error si Firestore falla por permisos.
+            console.error("📢 4. ERROR CRÍTICO FIRESTORE:", err);
             // Mensaje de error más detallado
             setError(`Error de Conexión: ${(err as Error).message}. (El servidor de Firebase denegó la lectura. Verifique la Autenticación/Reglas)`);
         } finally {
@@ -119,7 +129,7 @@ const useLocationData = (userId: string | null) => {
 
 
     // [CORRECCIÓN 2 - ESPERA EN EL EFECTO]:
-    // Ejecuta la carga de datos SOLO si el userId es válido. Esto soluciona el problema de timing.
+    // Ejecuta la carga de datos SOLO si el userId es válido.
     useEffect(() => {
         if (userId) { 
             fetchLocations();
@@ -141,6 +151,9 @@ const useLocationData = (userId: string | null) => {
             newDocId = docRef.id;
 
             await fetchLocations(); // Recarga los datos inmediatamente
+            
+            // 📢 5. LOG DE ESCRITURA: Se ha escrito un nuevo documento.
+            console.log(`📢 5. ESCRITURA FIRESTORE: Nuevo ${type} creado con ID: ${newDocId}`);
 
             return newDocId;
         } catch (e) {
@@ -175,6 +188,7 @@ const Ciudades: React.FC = () => {
 
     // 1. Inicialización de Autenticación (Bloque Robusto)
     useEffect(() => {
+        
         const tryAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -190,6 +204,9 @@ const Ciudades: React.FC = () => {
         };
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
+            // 📢 6. LOG CRÍTICO DE AUTH: Te dice el estado final de la autenticación.
+            console.log('📢 6. AUTH RESULTADO FINAL: Objeto USER es:', user); 
+            
             // [CORRECCIÓN 3]: onAuthStateChanged establece el resultado final de Auth
             setCurrentUser(user);
             setIsAuthenticated(!!user);

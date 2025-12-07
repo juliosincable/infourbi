@@ -1,11 +1,14 @@
 // Archivo: src/pages/Profile.tsx
 
 import React from 'react';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel } from '@ionic/react';
-// ❌ ANTES: import { useAuth } from '../context/Auth';
-// ✅ CORRECCIÓN: Ahora importamos useAuth desde el archivo de definiciones.
+import { 
+  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, 
+  IonButton, IonCard, IonCardContent, IonCardHeader, 
+  IonCardTitle, IonItem, IonLabel, IonIcon 
+} from '@ionic/react';
 import { useAuth } from '../context/AuthDefinitions'; 
 import { useHistory } from 'react-router-dom';
+import { personCircle } from 'ionicons/icons'; 
 
 const Profile: React.FC = () => {
   const { currentUser, logout } = useAuth();
@@ -36,16 +39,43 @@ const Profile: React.FC = () => {
           </IonCardHeader>
           <IonCardContent>
             {currentUser ? (
-              <IonItem>
-                <IonLabel>
-                  <h2>Email</h2>
-                  <p>{currentUser.email}</p>
-                </IonLabel>
-              </IonItem>
+                <>
+                    {/* Icono de Avatar Centrado */}
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        <IonIcon 
+                            icon={personCircle} 
+                            style={{ fontSize: '80px', color: '#6c757d' }} 
+                        />
+                    </div>
+
+                    {/* 🟢 Información del Nombre */}
+                    <IonItem lines="none">
+                        <IonLabel>
+                            <h2>Nombre</h2>
+                            {/* Usamos 'nombre' según tu interfaz Usuario */}
+                            <p>{currentUser.nombre || 'Nombre no disponible'}</p>
+                        </IonLabel>
+                    </IonItem>
+                    
+                    {/* 🟢 Información del Email (Corregido a 'correo' según la interfaz) */}
+                    <IonItem lines="none">
+                        <IonLabel>
+                            <h2>Email</h2>
+                            {/* Usamos 'correo' según tu interfaz Usuario */}
+                            <p>{currentUser.correo}</p>
+                        </IonLabel>
+                    </IonItem>
+                </>
             ) : (
               <p>No hay información del usuario disponible.</p>
             )}
-            <IonButton expand="block" onClick={handleLogout} color="danger" style={{ marginTop: '20px' }}>
+
+            <IonButton 
+                expand="block" 
+                onClick={handleLogout} 
+                color="danger" 
+                style={{ marginTop: '30px' }}
+            >
               Cerrar Sesión
             </IonButton>
           </IonCardContent>

@@ -1,24 +1,21 @@
-// Archivo: src/context/Auth.tsx (Versión Limpia, Final y con instancias inicializadas)
+// Archivo: src/context/Auth.tsx (Versión Final COMPLETA y sin errores de sintaxis/tipo)
 
 import React, { useEffect, useState, ReactNode } from 'react';
 import {
-    // Importaciones de tipos y funciones necesarias
+    // Importaciones de tipos y funciones necesarias de Firebase Auth
     User,
     onAuthStateChanged,
     signOut,
     signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { Firestore } from 'firebase/firestore'; // Importamos el tipo Firestore de la SDK
+import { Firestore, doc, getDoc } from 'firebase/firestore'; // Importamos funciones de Firestore
 
 // 1. IMPORTAMOS LAS INSTANCIAS INICIALIZADAS DE AUTH Y FIRESTORE
-// Esto asegura que initializeApp() ya se ejecutó en '../firebase'
-
 import { auth, db } from '../service/firebaseConfig';
 
 
-// Importación de elementos de definición de contexto:
-// NOTA IMPORTANTE: Asegúrese de que AuthContextType incluye 'db: Firestore'
-import { AuthContext, AuthContextType } from './AuthDefinitions';
+// Importación de elementos de definición de contexto, incluyendo el tipo Usuario
+import { AuthContext, AuthContextType, Usuario } from './AuthDefinitions';
 
 
 // *****************************************************************
@@ -29,6 +26,39 @@ export { AuthContext };
 export type { AuthContextType };
 
 
+// =================================================================
+// FUNCIÓN CRÍTICA PARA RESOLVER EL ERROR TS2322
+// =================================================================
+
+/**
+ * Busca los datos adicionales del usuario (nombre, correo) en Firestore
+ * y los combina con el UID para formar el objeto Usuario completo.
+ */
+const fetchUserData = async (uid: string): Promise<Usuario | null> => {
+    try {
+        // Busca en la colección 'users' el documento con el ID igual al UID del usuario
+        const userRef = doc(db as unknown as Firestore, 'users', uid);
+        const docSnap = await getDoc(userRef);
+
+        if (docSnap.exists()) {
+            const firestoreData = docSnap.data();
+            
+            // Creamos el objeto Usuario que cumple estrictamente con el contrato
+            const usuarioCompleto: Usuario = {
+                id: uid, 
+                nombre: firestoreData.nombre || 'Nombre no configurado', 
+                correo: firestoreData.correo || 'Correo no disponible',
+            };
+            return usuarioCompleto;
+        }
+        
+        return null; 
+    } catch (error) {
+        console.error("Error al obtener datos del usuario de Firestore:", error);
+        return null;
+    }
+};
+
 // --- Componente Proveedor (AuthProvider) ---
 interface AuthProviderProps {
     children: ReactNode;
@@ -36,30 +66,36 @@ interface AuthProviderProps {
 
 // EXPORTAMOS SOLO EL COMPONENTE PRINCIPAL
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    // ESTADO CORREGIDO: Almacena Usuario | null
+    const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Utilizamos la instancia 'auth' importada.
-
     useEffect(() => {
-        // Establece el listener de autenticación usando la instancia 'auth' importada
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setCurrentUser(user);
+        // Listener de autenticación, ahora ASÍNCRONO
+        const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+            setLoading(true);
+
+            if (user) {
+                // Obtenemos el perfil completo desde Firestore
+                const usuarioCompleto = await fetchUserData(user.uid);
+                setCurrentUser(usuarioCompleto); 
+            } else {
+                setCurrentUser(null);
+            }
+            
             setLoading(false);
         });
-        // La dependencia es un arreglo vacío ([]) porque 'auth' es una constante importada y no cambia
+
         return unsubscribe;
     }, []);
 
     // Función de Autenticación - LOGIN
     const login = async (email: string, pass: string) => {
-        // Usa la instancia 'auth' importada
         await signInWithEmailAndPassword(auth, email, pass);
     };
 
     // Función de Autenticación - LOGOUT
     const logout = () => {
-        // Usa la instancia 'auth' importada
         return signOut(auth);
     };
 
@@ -73,13 +109,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isAuthenticated,
         login,
         logout,
-        // AGREGAMOS FIRESTORE (db) AL CONTEXTO, usando aserciones de tipo para compatibilidad
         db: db as unknown as Firestore,
     };
 
     return (
         <AuthContext.Provider value={value}>
-            {/* Solo renderiza los hijos cuando la autenticación ha terminado de cargar */}
             {!loading && children}
         </AuthContext.Provider>
     );

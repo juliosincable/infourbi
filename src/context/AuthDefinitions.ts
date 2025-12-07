@@ -1,12 +1,17 @@
-// Archivo: src/context/AuthDefinitions.tsx
+// Archivo: src/context/AuthDefinitions.ts (Completamente limpio y funcional)
 
 import { createContext, useContext } from 'react';
-import { User } from 'firebase/auth'; 
 import { Firestore } from 'firebase/firestore'; 
+
+// Importación de Usuario desde el archivo de tipos
+import { Usuario } from '../types/types'; 
+
+// SOLUCIÓN AL ERROR TS2459: Reexportamos la interfaz Usuario.
+export type { Usuario }; 
 
 // --- 1. Interfaz del Contexto ---
 export interface AuthContextType {
-    currentUser: User | null;
+    currentUser: Usuario | null; 
     loading: boolean;
     isAuthenticated: boolean; 
     login: (email: string, pass: string) => Promise<void>; 
