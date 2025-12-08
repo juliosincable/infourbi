@@ -1,22 +1,20 @@
-// Archivo: src/context/AuthDefinitions.ts (Completamente limpio y funcional)
+// Archivo: src/context/AuthDefinitions.ts (VERSIÓN FINAL CORREGIDA)
 
 import { createContext, useContext } from 'react';
+// 🛑 CORRECCIÓN 1: Importar SOLAMENTE el TIPO 'Firestore'
 import { Firestore } from 'firebase/firestore'; 
 
-// Importación de Usuario desde el archivo de tipos
+// 🛑 Importación ÚNICA de Usuario desde el archivo de tipos
 import { Usuario } from '../types/types'; 
 
-// SOLUCIÓN AL ERROR TS2459: Reexportamos la interfaz Usuario.
-export type { Usuario }; 
-
-// --- 1. Interfaz del Contexto ---
+// --- 1. Interfaz del Contrato del Contexto ---
 export interface AuthContextType {
     currentUser: Usuario | null; 
     loading: boolean;
-    isAuthenticated: boolean; 
+    isAuthenticated: boolean;
     login: (email: string, pass: string) => Promise<void>; 
     logout: () => Promise<void>; 
-    db: Firestore; 
+    db: Firestore; // Ahora usa el tipo Firestore
 }
 
 // --- 2. Valores por Defecto e Inicialización del Contexto ---
@@ -26,12 +24,22 @@ export const defaultAuthContext: AuthContextType = {
     isAuthenticated: false, 
     login: async () => {}, 
     logout: async () => {}, 
-    db: {} as Firestore, 
+    db: {} as Firestore, // Valor dummy para cumplir el contrato
 };
 
 export const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
-// --- 3. Custom Hook (para consumir el contexto) ---
+// --- 3. Custom Hook ---
 export const useAuth = () => {
-    return useContext(AuthContext);
+    // Implementación del hook (mejorada para detectar uso fuera del Provider)
+    const context = useContext(AuthContext);
+    
+    if (context === defaultAuthContext) {
+        throw new Error('useAuth debe usarse dentro de un AuthProvider'); 
+    }
+    
+    return context;
 };
+
+// 🛑 CORRECCIÓN 2: Reexportar el tipo Usuario para que Auth.tsx pueda importarlo
+export type { Usuario };

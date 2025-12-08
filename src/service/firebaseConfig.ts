@@ -1,26 +1,29 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+// Archivo: src/service/firebaseConfig.ts (VERSIÓN CORREGIDA FINAL)
 
-// --- CONFIGURACIÓN CORREGIDA PARA VITE ---
+// Importaciones de las funciones del SDK de Firebase
+import { initializeApp, FirebaseApp } from 'firebase/app';
+import { getFirestore, Firestore } from 'firebase/firestore'; // <-- CORRECCIÓN: Importar getFirestore
+import { getAuth, Auth } from 'firebase/auth';
+
+// --- CONFIGURACIÓN PARA VITE ---
 // Usamos import.meta.env para acceder a las variables de entorno en el navegador.
 const firebaseConfig = {
-  // Las claves deben coincidir con el prefijo VITE_ de tu .env
-  apiKey: import.meta.env.VITE_API_KEY, 
-  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_APP_ID,
-  // measurementId es opcional, pero lo incluimos si lo tienes:
-  measurementId: import.meta.env.VITE_MEASUREMENT_ID, 
+    // Las claves deben coincidir con el prefijo VITE_ de tu .env
+    apiKey: import.meta.env.VITE_API_KEY, 
+    authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_APP_ID,
+    measurementId: import.meta.env.VITE_MEASUREMENT_ID, 
 };
 
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
+// 1. Inicializar Firebase
+export const app: FirebaseApp = initializeApp(firebaseConfig);
 
-// Inicializar servicios y exportarlos para usarlos en el resto de la app
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+// 2. Inicializar servicios y exportarlos (CORRECCIÓN: Se eliminó la importación incorrecta de la línea 2)
+export const db: Firestore = getFirestore(app); // <-- Función getFirestore ahora disponible
+export const auth: Auth = getAuth(app);
 
-export default app;
+// Exportación por defecto opcional
+// export default app;

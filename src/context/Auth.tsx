@@ -1,61 +1,41 @@
-// Archivo: src/context/Auth.tsx (Versión Final CORREGIDA para bucle de redirección)
+// Archivo: src/context/Auth.tsx (Refactorizado)
 
 import React, { useEffect, useState, ReactNode } from 'react';
 import {
-    // Importaciones de tipos y funciones necesarias de Firebase Auth
     User,
     onAuthStateChanged,
     signOut,
     signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { Firestore, doc, getDoc } from 'firebase/firestore'; // Importamos funciones de Firestore
+import { Firestore, doc, getDoc } from 'firebase/firestore'; 
 
-// 1. IMPORTAMOS LAS INSTANCIAS INICIALIZADAS DE AUTH Y FIRESTORE
 import { auth, db } from '../service/firebaseConfig';
+// Importamos la función getDocumentById y la referencia de colección del servicio anterior
+import { getDocumentById, usuariosCollection } from '../service/database'; 
 
-
-// Importación de elementos de definición de contexto, incluyendo el tipo Usuario
 import { AuthContext, AuthContextType, Usuario } from './AuthDefinitions';
-
-
-// *****************************************************************
-// ** EXPORTACIONES NECESARIAS PARA EL BARREL FILE (index.ts) **
-// *****************************************************************
 
 export { AuthContext };
 export type { AuthContextType };
 
-
-// =================================================================
-// FUNCIÓN CRÍTICA CORREGIDA PARA RESOLVER EL BUCLE DE REDIRECCIÓN
-// =================================================================
+// --- Tipo de la instancia de Firestore para evitar casteos repetidos ---
+const typedDB: Firestore = db as unknown as Firestore;
 
 /**
  * Busca los datos adicionales del usuario (nombre, correo) en Firestore
  * y los combina con el UID para formar el objeto Usuario completo.
- * * 🚨 CORRECCIÓN: Si el documento no existe o hay un error, retorna un objeto Usuario 
- * minimal en lugar de null para mantener isAuthenticated=true.
+ * Retorna siempre un objeto Usuario (completo o minimal) si el UID es válido.
  */
-const fetchUserData = async (uid: string): Promise<Usuario | null> => {
+const fetchUserData = async (uid: string): Promise<Usuario> => {
     try {
-        // Busca en la colección 'users' el documento con el ID igual al UID del usuario
-        const userRef = doc(db as unknown as Firestore, 'users', uid);
-        const docSnap = await getDoc(userRef);
+        // Mejor práctica: Usar la función de servicio que ya tiene el tipado de la colección
+        const usuarioCompleto = await getDocumentById<Usuario>(usuariosCollection, uid);
 
-        if (docSnap.exists()) {
-            const firestoreData = docSnap.data();
-            
-            // Creamos el objeto Usuario que cumple estrictamente con el contrato
-            const usuarioCompleto: Usuario = {
-                id: uid, 
-                nombre: firestoreData.nombre || 'Nombre no configurado', 
-                correo: firestoreData.correo || 'Correo no disponible',
-            };
+        if (usuarioCompleto) {
             return usuarioCompleto;
         }
         
-        // 🛑 PUNTO CRÍTICO DE CORRECCIÓN 1: Si no existe el documento de Firestore, 
-        // mantenemos el estado de autenticación.
+        // Si no existe el documento de Firestore, retornamos datos mínimos
         console.warn(`[AuthContext] No se encontraron datos de Firestore para el UID: ${uid}. Usando datos mínimos.`);
         return {
             id: uid, 
@@ -64,9 +44,9 @@ const fetchUserData = async (uid: string): Promise<Usuario | null> => {
         } as Usuario; 
 
     } catch (error) {
-        console.error("Error al obtener datos del usuario de Firestore. Asumiendo autenticación Firebase exitosa:", error);
+        console.error("Error al obtener datos del usuario de Firestore.", error);
         
-        // 🛑 PUNTO CRÍTICO DE CORRECCIÓN 2: Si hay un error, mantenemos el estado de autenticación.
+        // Si hay un error, retornamos datos de error
         return {
             id: uid, 
             nombre: 'Error de Carga', 
@@ -80,19 +60,16 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
-// EXPORTAMOS SOLO EL COMPONENTE PRINCIPAL
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    // ESTADO CORREGIDO: Almacena Usuario | null
     const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Listener de autenticación, ahora ASÍNCRONO
         const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
             setLoading(true);
 
             if (user) {
-                // Obtenemos el perfil completo desde Firestore (ahora garantizado que no será null si user existe)
+                // Obtenemos el perfil completo desde Firestore (siempre retorna Usuario, nunca null si user existe)
                 const usuarioCompleto = await fetchUserData(user.uid);
                 setCurrentUser(usuarioCompleto); 
             } else {
@@ -105,32 +82,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return unsubscribe;
     }, []);
 
-    // Función de Autenticación - LOGIN
     const login = async (email: string, pass: string) => {
         await signInWithEmailAndPassword(auth, email, pass);
     };
 
-    // Función de Autenticación - LOGOUT
     const logout = () => {
         return signOut(auth);
     };
 
-    // Calculamos isAuthenticated
     const isAuthenticated = !!currentUser;
 
-    // Valores proporcionados al Contexto
     const value: AuthContextType = {
         currentUser,
         loading,
         isAuthenticated,
         login,
         logout,
-        db: db as unknown as Firestore,
+        db: typedDB, // Usamos la instancia tipada
     };
+
+    // Sugerencia C: Si `loading` es true, deberías mostrar una pantalla de carga global.
+    if (loading) {
+        // En una PWA, un splash screen o IonSpinner ocupa este lugar.
+        // Aquí puedes poner un componente que cubra toda la pantalla.
+        return (
+            <AuthContext.Provider value={value}>
+                {/* Opcional: <IonLoading isOpen={true} message="Cargando sesión..." /> */}
+                <div style={{ padding: '20px', textAlign: 'center' }}>Cargando autenticación...</div>
+            </AuthContext.Provider>
+        );
+    }
+
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 };
