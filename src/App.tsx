@@ -1,5 +1,5 @@
 import { setupIonicReact } from "@ionic/react";
-// Importaciones clave de React Router v5
+// Importaciones clave de React Router v5 (Route y Redirect son correctas)
 import { Redirect, Route } from "react-router-dom";
 import {
     IonApp,
@@ -9,7 +9,7 @@ import {
     IonTabBar,
     IonTabButton,
     IonTabs,
-    // Componentes del Menú Lateral
+    // 🚀 Importamos componentes del menú lateral
     IonMenu,
     IonHeader,
     IonToolbar,
@@ -18,10 +18,11 @@ import {
     IonList,
     IonMenuToggle,
     IonItem,
-    IonButtons, // Añadido para el botón de menú
+    IonButtons, 
 } from "@ionic/react";
 // IonReactRouter utiliza internamente React Router.
 import { IonReactRouter } from "@ionic/react-router";
+// 🚀 Restauramos Suspense
 import React, { Suspense } from "react";
 import { ThemeProvider } from "./theme/ThemeProvider";
 import { AuthProvider } from "./context/Auth";
@@ -29,7 +30,6 @@ import {
     home as homeIcon,
     apps as appsIcon,
     person as personIcon,
-    menu as menuIcon, // Icono de menú
 } from "ionicons/icons";
 
 /* Core CSS required for Ionic components to work properly */
@@ -59,8 +59,8 @@ import "./theme/variables.scss";
 import { PrivateRoute } from "./router/PrivateRoute";
 import { AnonymousRoute } from "./router/AnonymousRoute";
 
-// Componente LoadingGate importado e implementado como wrapper
-import LoadingGate from "./router/LoadingGate";
+// Componente LoadingGate importado e implementado como wrapper (PASO 1)
+import LoadingGate from "./router/LoadingGate"; 
 
 // Rutas Públicas/Privadas (Usando React.lazy para consistencia y code splitting)
 const Home = React.lazy(() => import("./pages/Home"));
@@ -69,7 +69,7 @@ const PaginaDetalleNegocio = React.lazy(
     () => import("./pages/PaginaDetalleNegocio")
 );
 
-// Nuevas Rutas necesarias para protección
+// Nuevas Rutas necesarias para protección (ASUMIMOS QUE EXISTEN AHORA)
 const Login = React.lazy(() => import("./pages/Login"));
 const Profile = React.lazy(() => import("./pages/Profile"));
 
@@ -81,73 +81,69 @@ setupIonicReact();
 const App: React.FC = () => {
     return (
         <ThemeProvider>
-            <IonApp>
-                {/* MENÚ DESPLEGABLE LATERAL (IonMenu) */}
-                <IonMenu contentId="main" side="end">
-                    <IonHeader>
-                        <IonToolbar color="primary">
-                            <IonTitle>Menú de Navegación</IonTitle>
-                        </IonToolbar>
-                    </IonHeader>
-                    <IonContent>
-                        <IonList>
-                            <IonMenuToggle autoHide={false}>
-                                <IonItem routerLink="/home" routerDirection="none">
-                                    <IonIcon slot="start" icon={homeIcon} />
-                                    <IonLabel>Inicio</IonLabel>
-                                </IonItem>
-                                <IonItem routerLink="/prueba" routerDirection="none">
-                                    <IonIcon slot="start" icon={appsIcon} />
-                                    <IonLabel>Página de Prueba</IonLabel>
-                                </IonItem>
-                                <IonItem routerLink="/profile" routerDirection="none">
-                                    <IonIcon slot="start" icon={personIcon} />
-                                    <IonLabel>Mi Perfil</IonLabel>
-                                </IonItem>
-                            </IonMenuToggle>
-                        </IonList>
-                    </IonContent>
-                </IonMenu>
+            
+            {/* 🚀 MENÚ LATERAL AÑADIDO (CLAVE: debe estar fuera o envolviendo IonApp) */}
+            <IonMenu contentId="main" menuId="main" side="end"> 
+                <IonHeader>
+                    <IonToolbar>
+                        <IonTitle>Menú</IonTitle>
+                    </IonToolbar>
+                </IonHeader>
+                <IonContent>
+                    <IonList>
+                        {/* autoHide={false} evita conflictos de renderizado */}
+                        <IonMenuToggle autoHide={false}>
+                            <IonItem routerLink="/home" routerDirection="none">
+                                <IonIcon slot="start" icon={homeIcon} />
+                                <IonLabel>Inicio</IonLabel>
+                            </IonItem>
+                            <IonItem routerLink="/prueba" routerDirection="none">
+                                <IonIcon slot="start" icon={appsIcon} />
+                                <IonLabel>Página de Prueba</IonLabel>
+                            </IonItem>
+                            <IonItem routerLink="/profile" routerDirection="none">
+                                <IonIcon slot="start" icon={personIcon} />
+                                <IonLabel>Mi Perfil</IonLabel>
+                            </IonItem>
+                        </IonMenuToggle>
+                    </IonList>
+                </IonContent>
+            </IonMenu>
+            {/* 🚀 FIN DEL MENÚ LATERAL */}
 
-                <LoadingGate>
+            <IonApp>
+                {/* Implementación del componente LoadingGate como wrapper (PASO 2) */}
+                <LoadingGate> 
                     <AuthProvider>
                         <IonReactRouter>
                             <Suspense fallback={<div>Cargando...</div>}>
                                 <IonRouterOutlet id="main">
                                     {/* 1. RUTAS ANÓNIMAS (NO TABS) */}
-                                    <AnonymousRoute
-                                        path="/login"
-                                        component={Login}
-                                        exact={true}
-                                    />
+                                    <AnonymousRoute path="/login" component={Login} exact={true} />
 
-                                    {/* 2. RUTAS PRIVADAS/PÚBLICAS SIN PESTAÑAS */}
+                                    {/* 2. RUTAS PRIVADAS/PÚBLICAS SIN PESTAÑAS (Ej: Perfil, Detalle) */}
                                     <PrivateRoute
                                         path="/profile"
                                         component={Profile}
                                         exact={true}
                                     />
 
-                                    {/* Ruta de detalle pública */}
-                                    <PrivateRoute path="/negocio/:id" component={PaginaDetalleNegocio} />
+                                    {/* Ruta de detalle pública, sintaxis de React Router v5 */}
+                                    <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
 
                                     {/* 3. ESTRUCTURA DE PESTAÑAS (TABS) */}
                                     <Route path="/:tab(home|prueba)">
                                         <IonTabs>
                                             <IonRouterOutlet>
                                                 {/* Rutas con Pestañas: Usamos PrivateRoute con sintaxis v5 */}
-                                                <PrivateRoute
-                                                    path="/home"
-                                                    component={Home}
-                                                    exact={true}
-                                                />
+                                                <PrivateRoute path="/home" component={Home} exact={true} />
                                                 <PrivateRoute
                                                     path="/prueba"
                                                     component={Prueba}
                                                     exact={true}
                                                 />
 
-                                                {/* Redirección por defecto dentro del contexto de Tabs. */}
+                                                {/* Redirección por defecto dentro del contexto de Tabs. Sintaxis v5 con render. */}
                                                 <Route
                                                     exact
                                                     path="/"
@@ -176,12 +172,9 @@ const App: React.FC = () => {
                                         </IonTabs>
                                     </Route>
 
-                                    {/* 4. FALLBACK GENERAL: Si se accede a la raíz. */}
-                                    <Route
-                                        exact
-                                        path="/"
-                                        render={() => <Redirect to="/home" />}
-                                    />
+                                    {/* 4. FALLBACK GENERAL: Si se accede a la raíz. Sintaxis v5 con render. */}
+                                    <Route exact path="/" render={() => <Redirect to="/home" />} />
+
                                 </IonRouterOutlet>
                             </Suspense>
                         </IonReactRouter>

@@ -128,3 +128,23 @@ body.ion-palette-dark {
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   --box-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
+
+/* 🛑 SOLUCIÓN CRÍTICA: Fuerza la visibilidad de los botones del menú 🛑 */
+ion-toolbar {
+  --padding-start: 4px; /* Asegura espacio si el botón está a la izquierda */
+  --padding-end: 4px;   /* Asegura espacio si el botón está a la derecha */
+}
+
+/* Fuerza al botón a aparecer en el toolbar */
+ion-toolbar ion-menu-toggle {
+    display: block !important;
+    visibility: visible !important;
+    contain: layout; 
+}
+
+/* Asegura que el IonButton dentro del IonMenuToggle también sea visible */
+ion-toolbar ion-menu-toggle ion-button {
+    --padding-start: 8px; 
+    --padding-end: 8px;
+    visibility: visible !important;
+}

@@ -1,4 +1,4 @@
-// Archivo: src/context/Auth.tsx (Versión Final COMPLETA y sin errores de sintaxis/tipo)
+// Archivo: src/context/Auth.tsx (Versión Final CORREGIDA para bucle de redirección)
 
 import React, { useEffect, useState, ReactNode } from 'react';
 import {
@@ -27,12 +27,14 @@ export type { AuthContextType };
 
 
 // =================================================================
-// FUNCIÓN CRÍTICA PARA RESOLVER EL ERROR TS2322
+// FUNCIÓN CRÍTICA CORREGIDA PARA RESOLVER EL BUCLE DE REDIRECCIÓN
 // =================================================================
 
 /**
  * Busca los datos adicionales del usuario (nombre, correo) en Firestore
  * y los combina con el UID para formar el objeto Usuario completo.
+ * * 🚨 CORRECCIÓN: Si el documento no existe o hay un error, retorna un objeto Usuario 
+ * minimal en lugar de null para mantener isAuthenticated=true.
  */
 const fetchUserData = async (uid: string): Promise<Usuario | null> => {
     try {
@@ -52,10 +54,24 @@ const fetchUserData = async (uid: string): Promise<Usuario | null> => {
             return usuarioCompleto;
         }
         
-        return null; 
+        // 🛑 PUNTO CRÍTICO DE CORRECCIÓN 1: Si no existe el documento de Firestore, 
+        // mantenemos el estado de autenticación.
+        console.warn(`[AuthContext] No se encontraron datos de Firestore para el UID: ${uid}. Usando datos mínimos.`);
+        return {
+            id: uid, 
+            nombre: 'Usuario Genérico', 
+            correo: 'Correo no cargado',
+        } as Usuario; 
+
     } catch (error) {
-        console.error("Error al obtener datos del usuario de Firestore:", error);
-        return null;
+        console.error("Error al obtener datos del usuario de Firestore. Asumiendo autenticación Firebase exitosa:", error);
+        
+        // 🛑 PUNTO CRÍTICO DE CORRECCIÓN 2: Si hay un error, mantenemos el estado de autenticación.
+        return {
+            id: uid, 
+            nombre: 'Error de Carga', 
+            correo: 'Error de Carga',
+        } as Usuario;
     }
 };
 
@@ -76,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setLoading(true);
 
             if (user) {
-                // Obtenemos el perfil completo desde Firestore
+                // Obtenemos el perfil completo desde Firestore (ahora garantizado que no será null si user existe)
                 const usuarioCompleto = await fetchUserData(user.uid);
                 setCurrentUser(usuarioCompleto); 
             } else {
