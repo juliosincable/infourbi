@@ -1,52 +1,48 @@
-import React, { FC, PropsWithChildren } from 'react';
+// Archivo: src/router/LoadingGate.tsx (VERSIÓN CORREGIDA)
 
-// === SOLUCIÓN ESLINT DEFINITIVA (@typescript-eslint/no-empty-object-type) ===
-// Para satisfacer al linter, usamos un tipo que es estricto sobre la no existencia
-// de propiedades nombradas. El linter se queja de '{}' y 'interface {}' porque
-// significan 'cualquier cosa que no sea null/undefined'.
-// Mantenemos la funcionalidad de wrapper usando PropsWithChildren<{}>, y simplemente
-// suprimimos la advertencia si el linter es demasiado agresivo, o usamos 'object'
-// si la intención fuera ser más amplio.
-//
-// Dado que la intención es un wrapper sin props nombradas, PropsWithChildren<{}>
-// es el estándar. Si el linter sigue quejándose, debemos asegurarnos de que el
-// archivo de configuración del linter (`.eslintrc.js`) esté configurado para
-// permitir explícitamente el uso de PropsWithChildren.
-//
-// Retornamos a la versión más canónica:
-// Usaremos un tipo explícito que solo contiene 'children'.
-// ===================================
+import React, { FC } from 'react';
+import { IonSpinner } from '@ionic/react'; // Importamos el spinner de Ionic
+
+
+// Ahora apunta al archivo que acabamos de confirmar que EXPORTA useAuth
+import { useAuth } from '../context/AuthDefinitions';
 
 // Definimos el tipo de Props estrictamente como vacío (sin usar interfaz ni {})
-// Esto resuelve el problema de ESLint y el TS2322.
 type LoadingGateProps = {
     children: React.ReactNode;
 };
 
-// NOTA: Reemplazamos FC<PropsWithChildren<...>> con FC<LoadingGateProps>
-// para evitar la sobrecarga y ser explícitos sobre la única prop permitida: 'children'.
+// NOTA: LoadingGate debe ENVOLVER a AuthProvider en App.tsx, 
+// o usarse dentro de él si solo queremos bloquear la UI. 
+// Asumiremos que estás bloqueando el renderizado de la UI principal *antes*
+// de que el AuthProvider se inicialice completamente.
+
 const LoadingGate: FC<LoadingGateProps> = ({ children }) => { 
-    // --- Lógica de Carga y Autenticación ---
     
-    // Aquí se enlazaría con la lógica de tu AuthContext
-    const isLoading = false; // Reemplazar con lógica real (ej: authContext.isReady)
+    // 🛑 CORRECCIÓN: Usar la lógica de carga del contexto de autenticación.
+    // Asumimos que useAuth.loading es true mientras Firebase se inicializa.
+    const { loading } = useAuth();
     
-    if (isLoading) {
+    if (loading) { // 🛑 Ahora usa el estado real
         return (
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                minHeight: '100vh', 
-                backgroundColor: '#f4f5f8' 
-            }}>
-                <div style={{ padding: '20px', borderRadius: '8px', backgroundColor: 'white', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}>
-                    Cargando la aplicación...
-                </div>
+            // Usamos un contenedor centrado para la pantalla de carga inicial
+            <div 
+                style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', // Centrar verticalmente también
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    minHeight: '100vh', 
+                    backgroundColor: 'var(--ion-color-light)' // Fondo claro de Ionic
+                }}
+            >
+                <IonSpinner name="dots" color="primary" style={{ transform: 'scale(1.5)' }} />
+                <p style={{ marginTop: '20px', color: 'var(--ion-color-medium)' }}>Cargando la aplicación...</p>
             </div>
         );
     }
     
+    // Una vez que loading es false (el estado de Auth es conocido), renderizamos la aplicación
     return <>{children}</>;
 };
 
