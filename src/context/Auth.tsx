@@ -1,122 +1,110 @@
-// Archivo: src/context/Auth.tsx (Refactorizado)
+// src/context/Auth.tsx
+// Contiene la lógica de Firebase y el componente AuthProvider (única exportación de componente).
 
 import React, { useEffect, useState, ReactNode } from 'react';
-import {
-    User,
+import { 
+    User as FirebaseAuthUser,
     onAuthStateChanged,
-    signOut,
+    createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
+    signOut,
 } from 'firebase/auth';
-import { Firestore, doc, getDoc } from 'firebase/firestore'; 
+import { serverTimestamp, FieldValue } from 'firebase/firestore'; 
 
-import { auth, db } from '../service/firebaseConfig';
-// Importamos la función getDocumentById y la referencia de colección del servicio anterior
-import { getDocumentById, usuariosCollection } from '../service/database'; 
+import { AuthContext, AuthContextType } from './authContextTypes'; 
 
-import { AuthContext, AuthContextType, Usuario } from './AuthDefinitions';
+// Importaciones de servicio (Asegúrate que estas rutas existan)
+import { auth } from '../service/firebaseConfig';
+import { usuariosCollection, setDocumentById } from '../service/database';
+import { Usuario } from '../types/types'; 
 
-export { AuthContext };
-export type { AuthContextType };
+// =========================================================
+// LÓGICA DE REGISTRO
+// =========================================================
 
-// --- Tipo de la instancia de Firestore para evitar casteos repetidos ---
-const typedDB: Firestore = db as unknown as Firestore;
+const createAndRegisterUser = async (
+    nombre: string,
+    correo: string,
+    password: string,
+    countryCode: string = 'VE'
+): Promise<FirebaseAuthUser> => {
+    
+    const userCredential = await createUserWithEmailAndPassword(auth, correo, password);
+    const user = userCredential.user;
 
-/**
- * Busca los datos adicionales del usuario (nombre, correo) en Firestore
- * y los combina con el UID para formar el objeto Usuario completo.
- * Retorna siempre un objeto Usuario (completo o minimal) si el UID es válido.
- */
-const fetchUserData = async (uid: string): Promise<Usuario> => {
-    try {
-        // Mejor práctica: Usar la función de servicio que ya tiene el tipado de la colección
-        const usuarioCompleto = await getDocumentById<Usuario>(usuariosCollection, uid);
+    const initialUserData: Omit<Usuario, 'id'> = {
+        nombre: nombre, 
+        correo: user.email!, 
+        role: 'user', 
+        countryCode: countryCode, 
+        createdAt: serverTimestamp() as FieldValue, 
+    };
 
-        if (usuarioCompleto) {
-            return usuarioCompleto;
-        }
-        
-        // Si no existe el documento de Firestore, retornamos datos mínimos
-        console.warn(`[AuthContext] No se encontraron datos de Firestore para el UID: ${uid}. Usando datos mínimos.`);
-        return {
-            id: uid, 
-            nombre: 'Usuario Genérico', 
-            correo: 'Correo no cargado',
-        } as Usuario; 
-
-    } catch (error) {
-        console.error("Error al obtener datos del usuario de Firestore.", error);
-        
-        // Si hay un error, retornamos datos de error
-        return {
-            id: uid, 
-            nombre: 'Error de Carga', 
-            correo: 'Error de Carga',
-        } as Usuario;
-    }
+    await setDocumentById(usuariosCollection, user.uid, initialUserData);
+    return user;
 };
 
-// --- Componente Proveedor (AuthProvider) ---
+// =========================================================
+// EL COMPONENTE PROVIDER
+// =========================================================
+
 interface AuthProviderProps {
     children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
+    const [currentUser, setCurrentUser] = useState<FirebaseAuthUser | null>(null);
+    const [userInfo, setUserInfo] = useState<Usuario | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
-            setLoading(true);
-
-            if (user) {
-                // Obtenemos el perfil completo desde Firestore (siempre retorna Usuario, nunca null si user existe)
-                const usuarioCompleto = await fetchUserData(user.uid);
-                setCurrentUser(usuarioCompleto); 
-            } else {
-                setCurrentUser(null);
-            }
-            
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setCurrentUser(user);
             setLoading(false);
         });
-
         return unsubscribe;
     }, []);
-
-    const login = async (email: string, pass: string) => {
-        await signInWithEmailAndPassword(auth, email, pass);
+    
+    const handleLogin = async (correo: string, password: string) => {
+        setLoading(true);
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, correo, password);
+            setCurrentUser(userCredential.user);
+        } catch (error) {
+            setLoading(false);
+            throw error;
+        }
     };
 
-    const logout = () => {
-        return signOut(auth);
+    const handleLogout = async () => {
+        await signOut(auth);
+        setCurrentUser(null);
+        setUserInfo(null);
     };
 
-    const isAuthenticated = !!currentUser;
+    const handleRegister = async (nombre: string, correo: string, password: string, countryCode?: string) => {
+        setLoading(true);
+        try {
+            const user = await createAndRegisterUser(nombre, correo, password, countryCode);
+            setCurrentUser(user);
+        } catch (error) {
+            setLoading(false);
+            throw error;
+        }
+    };
 
     const value: AuthContextType = {
         currentUser,
+        userInfo,
         loading,
-        isAuthenticated,
-        login,
-        logout,
-        db: typedDB, // Usamos la instancia tipada
+        login: handleLogin,
+        logout: handleLogout,
+        register: handleRegister,
     };
-
-    // Sugerencia C: Si `loading` es true, deberías mostrar una pantalla de carga global.
-    if (loading) {
-        // En una PWA, un splash screen o IonSpinner ocupa este lugar.
-        // Aquí puedes poner un componente que cubra toda la pantalla.
-        return (
-            <AuthContext.Provider value={value}>
-                {/* Opcional: <IonLoading isOpen={true} message="Cargando sesión..." /> */}
-                <div style={{ padding: '20px', textAlign: 'center' }}>Cargando autenticación...</div>
-            </AuthContext.Provider>
-        );
-    }
-
 
     return (
         <AuthContext.Provider value={value}>
-            {children}
+            {!loading && children}
         </AuthContext.Provider>
     );
 };

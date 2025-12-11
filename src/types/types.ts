@@ -1,15 +1,27 @@
-import { DocumentData, DocumentSnapshot } from 'firebase/firestore';
+import { DocumentData, DocumentSnapshot, FieldValue, Timestamp } from 'firebase/firestore';
 
+// =========================================================
+// INTERFAZ USUARIO (CORREGIDA Y COMPLETA)
+// =========================================================
 export interface Usuario {
   id?: string;
   nombre: string;
   correo: string;
+  
+  // CAMPOS CLAVE AÑADIDOS PARA EL PROYECTO infoUrbi
+  role: 'user' | 'business_owner' | 'institution_owner' | 'admin';
+  countryCode: string; 
+  createdAt: FieldValue | Timestamp; 
 }
+
+// =========================================================
+// OTRAS INTERFACES
+// =========================================================
 
 export interface Negocio {
   id?: string;
   nombre: string;
-  propietario_id: string; // Se mantiene por si se necesita saber el propietario
+  propietario_id: string; 
   whatsapp: string;
   instagram?: string;
   direccion: string;
@@ -19,12 +31,12 @@ export interface Negocio {
     lat: number;
     lng: number;
   };
-  foto: string; // URL de la foto principal
-  codigoQr: string; // URL del código QR
+  foto: string; 
+  codigoQr: string; 
   administradores: string[];
-  logo: string; // URL del logo
+  logo: string; 
   categoria: string;
-  lugar: string[]; // <-- Campo 'lugar' como un array de strings
+  lugar: string[]; 
 }
 
 export interface Lugar {
@@ -41,13 +53,13 @@ export interface Pais {
 export interface Estado {
   id?: string;
   nombre: string;
-  pais_id: string; // Referencia al ID del país
+  pais_id: string; 
 }
 
 export interface Ciudad {
   id?: string;
   nombre: string;
-  estado_id: string; // Referencia al ID del estado
+  estado_id: string; 
 }
 
 export interface Evento {
@@ -65,7 +77,7 @@ export interface Producto {
 }
 
 export interface PaginationOptions {
-  pageSize?: number; // Propiedad corregida a opcional para evitar el error TS2345
+  pageSize?: number;
   startAfterDoc?: DocumentSnapshot<DocumentData>;
   orderByField?: string;
   orderDirection?: 'asc' | 'desc';
