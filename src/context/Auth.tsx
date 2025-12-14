@@ -1,136 +1,128 @@
-// Archivo: src/context/Auth.tsx (Versión Final CORREGIDA para bucle de redirección)
+// src/context/Auth.tsx (VERSIÓN FINAL Y COMPLETA)
 
 import React, { useEffect, useState, ReactNode } from 'react';
-import {
-    // Importaciones de tipos y funciones necesarias de Firebase Auth
-    User,
+import { 
     onAuthStateChanged,
-    signOut,
-    signInWithEmailAndPassword,
+    User as FirebaseAuthUser,
 } from 'firebase/auth';
-import { Firestore, doc, getDoc } from 'firebase/firestore'; // Importamos funciones de Firestore
 
-// 1. IMPORTAMOS LAS INSTANCIAS INICIALIZADAS DE AUTH Y FIRESTORE
-import { auth, db } from '../service/firebaseConfig';
+import { AuthContext, AuthContextType } from './authContextTypes'; 
 
+// Importar la instancia de Auth para onAuthStateChanged
+import { auth } from '../service/firebaseConfig'; 
 
-// Importación de elementos de definición de contexto, incluyendo el tipo Usuario
-import { AuthContext, AuthContextType, Usuario } from './AuthDefinitions';
+// Importación del Servicio AUTH (asumiendo que está en la misma carpeta o adyacente)
+import { 
+    register,
+    login,
+    logout
+} from './authService'; 
 
+// Importar la función para OBTENER el perfil de Firestore
+import { getUserProfile } from '../service/database'; 
 
-// *****************************************************************
-// ** EXPORTACIONES NECESARIAS PARA EL BARREL FILE (index.ts) **
-// *****************************************************************
+import { Usuario } from '../types/types'; 
 
-export { AuthContext };
-export type { AuthContextType };
+// =========================================================
+// EL COMPONENTE PROVIDER (AuthProvider)
+// =========================================================
 
-
-// =================================================================
-// FUNCIÓN CRÍTICA CORREGIDA PARA RESOLVER EL BUCLE DE REDIRECCIÓN
-// =================================================================
-
-/**
- * Busca los datos adicionales del usuario (nombre, correo) en Firestore
- * y los combina con el UID para formar el objeto Usuario completo.
- * * 🚨 CORRECCIÓN: Si el documento no existe o hay un error, retorna un objeto Usuario 
- * minimal en lugar de null para mantener isAuthenticated=true.
- */
-const fetchUserData = async (uid: string): Promise<Usuario | null> => {
-    try {
-        // Busca en la colección 'users' el documento con el ID igual al UID del usuario
-        const userRef = doc(db as unknown as Firestore, 'users', uid);
-        const docSnap = await getDoc(userRef);
-
-        if (docSnap.exists()) {
-            const firestoreData = docSnap.data();
-            
-            // Creamos el objeto Usuario que cumple estrictamente con el contrato
-            const usuarioCompleto: Usuario = {
-                id: uid, 
-                nombre: firestoreData.nombre || 'Nombre no configurado', 
-                correo: firestoreData.correo || 'Correo no disponible',
-            };
-            return usuarioCompleto;
-        }
-        
-        // 🛑 PUNTO CRÍTICO DE CORRECCIÓN 1: Si no existe el documento de Firestore, 
-        // mantenemos el estado de autenticación.
-        console.warn(`[AuthContext] No se encontraron datos de Firestore para el UID: ${uid}. Usando datos mínimos.`);
-        return {
-            id: uid, 
-            nombre: 'Usuario Genérico', 
-            correo: 'Correo no cargado',
-        } as Usuario; 
-
-    } catch (error) {
-        console.error("Error al obtener datos del usuario de Firestore. Asumiendo autenticación Firebase exitosa:", error);
-        
-        // 🛑 PUNTO CRÍTICO DE CORRECCIÓN 2: Si hay un error, mantenemos el estado de autenticación.
-        return {
-            id: uid, 
-            nombre: 'Error de Carga', 
-            correo: 'Error de Carga',
-        } as Usuario;
-    }
-};
-
-// --- Componente Proveedor (AuthProvider) ---
 interface AuthProviderProps {
     children: ReactNode;
 }
 
-// EXPORTAMOS SOLO EL COMPONENTE PRINCIPAL
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    // ESTADO CORREGIDO: Almacena Usuario | null
-    const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
+    const [currentUser, setCurrentUser] = useState<FirebaseAuthUser | null>(null);
+    const [userInfo, setUserInfo] = useState<Usuario | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const isAuthenticated = !!currentUser && !!userInfo;
+
+    // Función auxiliar para cargar el perfil de Firestore
+    const loadUserProfile = async (user: FirebaseAuthUser) => {
+        try {
+            const profile = await getUserProfile(user.uid); 
+            setUserInfo(profile);
+        } catch (error) {
+            console.error('Error cargando perfil de usuario:', error);
+            setUserInfo(null);
+        }
+    };
+    
+    // useEffect para manejar el cambio de estado de Auth y la carga del perfil
     useEffect(() => {
-        // Listener de autenticación, ahora ASÍNCRONO
-        const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
-            setLoading(true);
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            setCurrentUser(user);
 
             if (user) {
-                // Obtenemos el perfil completo desde Firestore (ahora garantizado que no será null si user existe)
-                const usuarioCompleto = await fetchUserData(user.uid);
-                setCurrentUser(usuarioCompleto); 
+                await loadUserProfile(user); 
             } else {
-                setCurrentUser(null);
+                setUserInfo(null); 
             }
             
             setLoading(false);
         });
-
         return unsubscribe;
     }, []);
+    
+    // --- MANEJADORES DE SESIÓN (Llaman al Servicio y DEVUELVEN el User) ---
 
-    // Función de Autenticación - LOGIN
-    const login = async (email: string, pass: string) => {
-        await signInWithEmailAndPassword(auth, email, pass);
+    // Login: Debe devolver Promise<FirebaseAuthUser> para cumplir el contrato
+    const handleLogin = async (correo: string, password: string): Promise<FirebaseAuthUser> => {
+        setLoading(true);
+        
+        try {
+            const user = await login(correo, password); 
+            
+            setCurrentUser(user);
+            await loadUserProfile(user); 
+
+            // ✅ CORRECCIÓN TS2322: DEVOLVER EL OBJETO USER
+            return user; 
+            
+        } finally {
+             setLoading(false);
+        }
+    };
+    
+    // Logout: Usa el servicio 
+    const handleLogout = async () => {
+        await logout(); 
     };
 
-    // Función de Autenticación - LOGOUT
-    const logout = () => {
-        return signOut(auth);
+    // Registro: Debe devolver Promise<FirebaseAuthUser> para cumplir el contrato
+    const handleRegister = async (data: { nombre: string, correo: string, password: string, countryCode?: string }): Promise<FirebaseAuthUser> => {
+        setLoading(true);
+
+        try {
+            const user = await register(data); 
+            
+            setCurrentUser(user);
+            await loadUserProfile(user); 
+
+            // ✅ CORRECCIÓN TS2322: DEVOLVER EL OBJETO USER
+            return user;
+            
+        } finally {
+            setLoading(false);
+        }
     };
 
-    // Calculamos isAuthenticated
-    const isAuthenticated = !!currentUser;
-
-    // Valores proporcionados al Contexto
+    // El objeto de valor para el contexto
     const value: AuthContextType = {
         currentUser,
+        userInfo, 
         loading,
-        isAuthenticated,
-        login,
-        logout,
-        db: db as unknown as Firestore,
+        isAuthenticated, 
+        login: handleLogin,
+        logout: handleLogout,
+        register: handleRegister,
     };
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {/* Solo renderiza los hijos cuando la autenticación inicial ha terminado */}
+            {!loading && children} 
         </AuthContext.Provider>
     );
 };

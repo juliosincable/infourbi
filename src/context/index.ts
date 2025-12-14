@@ -1,24 +1,13 @@
-// Archivo: ./src/context/index.ts (CORREGIDO FINAL)
-// Este archivo actúa como el catálogo (barrel file) para exportar el hook y los tipos.
+// src/context/index.ts
+// Este es el punto de entrada que soluciona todos los errores TS2305 en App.tsx y Register.tsx.
 
-import { useContext } from 'react';
+// 1. Importamos la Constante, el Tipo y el hook useAuth desde el archivo de tipos:
+import { AuthContext, useAuth } from './authContextTypes'; 
+import type { AuthContextType } from './authContextTypes'; 
 
-// Importamos los valores necesarios para uso interno.
-import { AuthContext } from './Auth'; 
-// Importamos el tipo para su re-exportación.
-import type { AuthContextType } from './Auth'; 
-// Importamos y re-exportamos el Proveedor, ya que el componente principal (App.tsx) 
-// necesitará envolverse en él.
+// 2. Importamos y re-exportamos solo el Provider desde Auth.tsx:
 export { AuthProvider } from './Auth'; 
 
-/**
- * Hook para consumir el contexto de autenticación.
- * Se exporta desde aquí para que Auth.tsx pueda cumplir con las reglas de Fast Refresh.
- */
-export const useAuth = () => {
-    // Este hook ahora funciona porque AuthContext está correctamente re-exportado en Auth.tsx
-    return useContext(AuthContext);
-};
-
-// Re-exportamos el tipo (ya importado arriba).
+// 3. Re-exportamos todo (Context, Hook y Type) para fácil acceso:
+export { AuthContext, useAuth };
 export type { AuthContextType };
