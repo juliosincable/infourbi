@@ -1,4 +1,4 @@
-// src/pages/Register.tsx (CÓDIGO COMPLETO Y FINAL SIN ERRORES)
+// src/pages/Register.tsx (CÓDIGO COMPLETO Y CORREGIDO)
 
 import React, { useState } from 'react';
 import { 
@@ -28,15 +28,34 @@ const Register: React.FC = () => {
         }
 
         try {
-            await register(nombre, correo, password, 'VE'); 
+            // 🛑 CORRECCIÓN TS2554: Pasamos UN solo objeto de datos (RegisterData)
+            await register({
+                nombre: nombre,
+                correo: correo,
+                password: password,
+                countryCode: 'VE' // Usamos 'VE' por defecto, como lo habías intentado
+            }); 
+            
+            // Redirigimos a la ruta que quieras tras el registro exitoso
             history.push('/home'); 
-        } catch (err: unknown) { // CORRECCIÓN ESLINT: Usamos 'unknown' y comprobamos
+            
+        } catch (err: unknown) {
             let errorMessage = 'Ocurrió un error desconocido.';
             if (err instanceof Error) {
-                if ('code' in err && err.code === 'auth/email-already-in-use') {
-                    errorMessage = 'El correo electrónico ya está registrado.';
+                // Manejo de errores comunes de Firebase Auth
+                if ('code' in err && typeof err.code === 'string') {
+                    switch (err.code) {
+                        case 'auth/email-already-in-use':
+                            errorMessage = 'El correo electrónico ya está registrado.';
+                            break;
+                        case 'auth/weak-password':
+                            errorMessage = 'La contraseña debe tener al menos 6 caracteres.';
+                            break;
+                        default:
+                            errorMessage = 'Error al registrar: ' + err.message;
+                    }
                 } else {
-                    errorMessage = 'Error al registrar: ' + err.message;
+                     errorMessage = 'Error al registrar: ' + err.message;
                 }
             }
             setError(errorMessage);

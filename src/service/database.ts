@@ -19,9 +19,9 @@ import {
     Query,
     QueryDocumentSnapshot,
     DocumentSnapshot,
-    WhereFilterOp, // Importamos el tipo para el operador where
-    setDoc, // CRÍTICO: setDoc para setDocumentById
-    serverTimestamp, // Útil si manejas fechas de creación/actualización
+    WhereFilterOp, 
+    setDoc, 
+    serverTimestamp, 
 } from "firebase/firestore";
 
 import {
@@ -160,6 +160,7 @@ export const getDocuments = async <T extends { id?: string }>(
     return queryDocuments(collectionRef, [], pagination);
 };
 
+// ✅ FUNCIÓN REQUERIDA POR Auth.tsx: Obtener un documento por ID
 export const getDocumentById = async <T extends { id?: string }>(
     collectionRef: CollectionReference<T>,
     id: string
@@ -167,7 +168,8 @@ export const getDocumentById = async <T extends { id?: string }>(
     try {
         const docRef = doc(collectionRef, id);
         const docSnap = await getDoc(docRef);
-        return docSnap.exists() ? docSnap.data() : null;
+        // Gracias al conversor, docSnap.data() ya incluye el ID y los tipos correctos
+        return docSnap.exists() ? docSnap.data() : null; 
     } catch (error) {
         console.error(`Error al obtener el documento con ID '${id}':`, error);
         throw new Error(`Error al obtener el documento con ID '${id}': ${error instanceof Error ? error.message : String(error)}`);
@@ -228,7 +230,7 @@ export const setDocumentById = async <T extends { id?: string }>(
 ): Promise<void> => {
     try {
         const docRef = doc(collectionRef, id);
-        // Usamos { merge: true } para crear el documento si no existe, o actualizarlo si existe.
+        // Usamos { merge: true } para crear/actualizar
         await setDoc(docRef, data as DocumentData, { merge: true });
     } catch (error) {
         console.error(`Error al establecer el documento con ID '${id}':`, error);
@@ -241,6 +243,15 @@ export const setDocumentById = async <T extends { id?: string }>(
 
 export const addUser = (data: Omit<Usuario, "id">) =>
     addDocument(usuariosCollection, data);
+
+// ✅ FUNCIÓN AÑADIDA PARA CUMPLIR EL CONTRATO DE Auth.tsx
+/**
+ * Obtiene el perfil de un usuario de infoUrbi por su UID de Firebase Auth.
+ * Utiliza la función genérica getDocumentById.
+ */
+export const getUserProfile = (uid: string): Promise<Usuario | null> => {
+    return getDocumentById<Usuario>(usuariosCollection, uid);
+};
 
 /**
  * Simplificado usando la función genérica queryDocuments.

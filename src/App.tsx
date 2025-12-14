@@ -1,17 +1,16 @@
-// src/App.tsx (CÓDIGO COMPLETO Y FINAL SIN ERRORES DE COMPILACIÓN)
+// src/App.tsx (VERSIÓN CORREGIDA FINAL)
 
 import React from 'react';
 import { 
     IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, IonIcon, 
-    IonLabel, IonBadge 
-} from '@ionic/react'; // <-- SOLO COMPONENTES DE IONIC
-// ******* CORRECCIÓN FINAL TS2305: Route y Redirect vienen de react-router-dom *******
+    IonLabel, IonBadge, IonApp // 🎯 AÑADIR IonApp AQUÍ
+} from '@ionic/react'; 
 import { Redirect, Route, useHistory } from 'react-router-dom'; 
 import { IonReactRouter } from '@ionic/react-router';
 
-import { ellipse, square, triangle, logOutOutline } from 'ionicons/icons';
+import { ellipse, square, triangle, logOutOutline, home, person, cog } from 'ionicons/icons'; // 🎯 Añadir íconos básicos
 
-// Importación de AuthProvider y useAuth (Ruta ya corregida)
+// Importación de AuthProvider y useAuth 
 import { AuthProvider, useAuth } from "./context"; 
 
 // Importaciones de páginas
@@ -66,50 +65,61 @@ const MenuLogoutItem: React.FC = () => {
 
 
 const App: React.FC = () => (
-    <IonReactRouter>
-        <AuthProvider>
-            <IonTabs>
-                <IonRouterOutlet>
-                    <Route exact path="/home">
-                        <Home />
-                    </Route>
-                    <Route exact path="/login">
-                        <Login />
-                    </Route>
-                    <Route exact path="/register">
-                        <Register />
-                    </Route>
-                    <Route exact path="/profile">
-                        <Profile />
-                    </Route>
-                    <Route exact path="/negocio/:id">
-                        <PaginaDetalleNegocio />
-                    </Route>
-                    <Route exact path="/prueba">
-                        <Prueba />
-                    </Route>
-                    <Route exact path="/">
-                        <Redirect to="/home" />
-                    </Route>
-                </IonRouterOutlet>
-                <IonTabBar slot="bottom">
-                    <IonTabButton tab="home" href="/home">
-                        <IonIcon icon={triangle} />
-                        <IonLabel>Home</IonLabel>
-                    </IonTabButton>
-                    <IonTabButton tab="profile" href="/profile">
-                        <IonIcon icon={ellipse} />
-                        <IonLabel>Perfil</IonLabel>
-                    </IonTabButton>
-                    <IonTabButton tab="prueba" href="/prueba">
-                        <IonIcon icon={square} />
-                        <IonLabel>Prueba</IonLabel>
-                    </IonTabButton>
-                    <MenuLogoutItem />
-                </IonTabBar>
-            </IonTabs>
-        </AuthProvider>
-    </IonReactRouter>
+    // 🎯 CRÍTICO: Envuelve todo en IonApp (faltaba en tu código de App.tsx)
+    <IonApp>
+        <IonReactRouter>
+            <AuthProvider>
+                
+                {/* 1. RUTAS SIN BARRA DE PESTAÑAS (Login, Register, Detalle Negocio) */}
+                <Route exact path="/login" component={Login} />
+                <Route exact path="/register" component={Register} />
+                <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
+
+
+                {/* 2. ESTRUCTURA DE PESTAÑAS */}
+                <IonTabs>
+                    <IonRouterOutlet>
+                        {/* 🎯 CORRECCIÓN CLAVE: Todas las rutas de las pestañas deben usar el prefijo /tabs/ */}
+                        <Route exact path="/tabs/home" component={Home} />
+                        <Route exact path="/tabs/profile" component={Profile} />
+                        <Route exact path="/tabs/prueba" component={Prueba} />
+
+                        {/* Redirección dentro de tabs: /tabs -> /tabs/home */}
+                        <Route exact path="/tabs">
+                            <Redirect to="/tabs/home" />
+                        </Route>
+
+                        {/* Redirección por defecto: / -> /tabs/home (o /login si es la página de inicio) */}
+                        <Route exact path="/">
+                             {/* Puedes cambiar '/tabs/home' por '/login' si quieres que inicie en el login */}
+                            <Redirect to="/tabs/home" /> 
+                        </Route>
+                    </IonRouterOutlet>
+                    
+                    {/* 3. BARRA DE PESTAÑAS (DEBE APUNTAR A LAS NUEVAS RUTAS /tabs/...) */}
+                    <IonTabBar slot="bottom">
+                        <IonTabButton tab="home" href="/tabs/home">
+                            <IonIcon icon={triangle} />
+                            <IonLabel>Home</IonLabel>
+                        </IonTabButton>
+                        
+                        <IonTabButton tab="profile" href="/tabs/profile">
+                            <IonIcon icon={ellipse} />
+                            <IonLabel>Perfil</IonLabel>
+                        </IonTabButton>
+                        
+                        <IonTabButton tab="prueba" href="/tabs/prueba">
+                            <IonIcon icon={square} />
+                            <IonLabel>Prueba</IonLabel>
+                        </IonTabButton>
+                        
+                        <MenuLogoutItem />
+                    </IonTabBar>
+                </IonTabs>
+
+            </AuthProvider>
+        </IonReactRouter>
+    </IonApp>
 );
 
 export default App;

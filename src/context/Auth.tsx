@@ -1,51 +1,30 @@
-// src/context/Auth.tsx
-// Contiene la lógica de Firebase y el componente AuthProvider (única exportación de componente).
+// src/context/Auth.tsx (VERSIÓN FINAL Y COMPLETA)
 
 import React, { useEffect, useState, ReactNode } from 'react';
 import { 
-    User as FirebaseAuthUser,
     onAuthStateChanged,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut,
+    User as FirebaseAuthUser,
 } from 'firebase/auth';
-import { serverTimestamp, FieldValue } from 'firebase/firestore'; 
 
 import { AuthContext, AuthContextType } from './authContextTypes'; 
 
-// Importaciones de servicio (Asegúrate que estas rutas existan)
-import { auth } from '../service/firebaseConfig';
-import { usuariosCollection, setDocumentById } from '../service/database';
+// Importar la instancia de Auth para onAuthStateChanged
+import { auth } from '../service/firebaseConfig'; 
+
+// Importación del Servicio AUTH (asumiendo que está en la misma carpeta o adyacente)
+import { 
+    register,
+    login,
+    logout
+} from './authService'; 
+
+// Importar la función para OBTENER el perfil de Firestore
+import { getUserProfile } from '../service/database'; 
+
 import { Usuario } from '../types/types'; 
 
 // =========================================================
-// LÓGICA DE REGISTRO
-// =========================================================
-
-const createAndRegisterUser = async (
-    nombre: string,
-    correo: string,
-    password: string,
-    countryCode: string = 'VE'
-): Promise<FirebaseAuthUser> => {
-    
-    const userCredential = await createUserWithEmailAndPassword(auth, correo, password);
-    const user = userCredential.user;
-
-    const initialUserData: Omit<Usuario, 'id'> = {
-        nombre: nombre, 
-        correo: user.email!, 
-        role: 'user', 
-        countryCode: countryCode, 
-        createdAt: serverTimestamp() as FieldValue, 
-    };
-
-    await setDocumentById(usuariosCollection, user.uid, initialUserData);
-    return user;
-};
-
-// =========================================================
-// EL COMPONENTE PROVIDER
+// EL COMPONENTE PROVIDER (AuthProvider)
 // =========================================================
 
 interface AuthProviderProps {
@@ -57,46 +36,84 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [userInfo, setUserInfo] = useState<Usuario | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const isAuthenticated = !!currentUser && !!userInfo;
+
+    // Función auxiliar para cargar el perfil de Firestore
+    const loadUserProfile = async (user: FirebaseAuthUser) => {
+        try {
+            const profile = await getUserProfile(user.uid); 
+            setUserInfo(profile);
+        } catch (error) {
+            console.error('Error cargando perfil de usuario:', error);
+            setUserInfo(null);
+        }
+    };
+    
+    // useEffect para manejar el cambio de estado de Auth y la carga del perfil
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setCurrentUser(user);
+
+            if (user) {
+                await loadUserProfile(user); 
+            } else {
+                setUserInfo(null); 
+            }
+            
             setLoading(false);
         });
         return unsubscribe;
     }, []);
     
-    const handleLogin = async (correo: string, password: string) => {
-        setLoading(true);
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, correo, password);
-            setCurrentUser(userCredential.user);
-        } catch (error) {
-            setLoading(false);
-            throw error;
-        }
-    };
+    // --- MANEJADORES DE SESIÓN (Llaman al Servicio y DEVUELVEN el User) ---
 
-    const handleLogout = async () => {
-        await signOut(auth);
-        setCurrentUser(null);
-        setUserInfo(null);
-    };
-
-    const handleRegister = async (nombre: string, correo: string, password: string, countryCode?: string) => {
+    // Login: Debe devolver Promise<FirebaseAuthUser> para cumplir el contrato
+    const handleLogin = async (correo: string, password: string): Promise<FirebaseAuthUser> => {
         setLoading(true);
+        
         try {
-            const user = await createAndRegisterUser(nombre, correo, password, countryCode);
+            const user = await login(correo, password); 
+            
             setCurrentUser(user);
-        } catch (error) {
+            await loadUserProfile(user); 
+
+            // ✅ CORRECCIÓN TS2322: DEVOLVER EL OBJETO USER
+            return user; 
+            
+        } finally {
+             setLoading(false);
+        }
+    };
+    
+    // Logout: Usa el servicio 
+    const handleLogout = async () => {
+        await logout(); 
+    };
+
+    // Registro: Debe devolver Promise<FirebaseAuthUser> para cumplir el contrato
+    const handleRegister = async (data: { nombre: string, correo: string, password: string, countryCode?: string }): Promise<FirebaseAuthUser> => {
+        setLoading(true);
+
+        try {
+            const user = await register(data); 
+            
+            setCurrentUser(user);
+            await loadUserProfile(user); 
+
+            // ✅ CORRECCIÓN TS2322: DEVOLVER EL OBJETO USER
+            return user;
+            
+        } finally {
             setLoading(false);
-            throw error;
         }
     };
 
+    // El objeto de valor para el contexto
     const value: AuthContextType = {
         currentUser,
-        userInfo,
+        userInfo, 
         loading,
+        isAuthenticated, 
         login: handleLogin,
         logout: handleLogout,
         register: handleRegister,
@@ -104,7 +121,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {/* Solo renderiza los hijos cuando la autenticación inicial ha terminado */}
+            {!loading && children} 
         </AuthContext.Provider>
     );
 };

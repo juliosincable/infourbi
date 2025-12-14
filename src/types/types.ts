@@ -11,7 +11,7 @@ export interface Usuario {
   // CAMPOS CLAVE AÑADIDOS PARA EL PROYECTO infoUrbi
   role: 'user' | 'business_owner' | 'institution_owner' | 'admin';
   countryCode: string; 
-  createdAt: FieldValue | Timestamp; 
+  createdAt: FieldValue | Timestamp; // <== ESTO FUE LA CORRECCIÓN CLAVE
 }
 
 // =========================================================
