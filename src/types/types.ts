@@ -1,21 +1,28 @@
+// src/types/types.ts
 import { DocumentData, DocumentSnapshot, FieldValue, Timestamp } from 'firebase/firestore';
 
 // =========================================================
-// INTERFAZ USUARIO (CORREGIDA Y COMPLETA)
+// INTERFAZ USUARIO (CORREGIDA PARA EL ERROR TS2353 Y CAMPO EMAIL)
 // =========================================================
 export interface Usuario {
+  // 🛑 CORRECCIÓN CLAVE: Agregamos 'uid', que es el identificador de Firebase Auth.
+  uid: string; 
+  
+  // Hemos decidido usar 'email' en lugar de 'correo' para la consistencia con Firebase Auth.
+  email: string; // <-- Campo 'correo' renombrado a 'email'
+  
+  // Los campos originales de tu interfaz:
   id?: string;
   nombre: string;
-  correo: string;
   
   // CAMPOS CLAVE AÑADIDOS PARA EL PROYECTO infoUrbi
   role: 'user' | 'business_owner' | 'institution_owner' | 'admin';
   countryCode: string; 
-  createdAt: FieldValue | Timestamp; // <== ESTO FUE LA CORRECCIÓN CLAVE
+  createdAt: FieldValue | Timestamp;
 }
 
 // =========================================================
-// OTRAS INTERFACES
+// OTRAS INTERFACES (SIN CAMBIOS)
 // =========================================================
 
 export interface Negocio {

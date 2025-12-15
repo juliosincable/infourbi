@@ -1,17 +1,21 @@
-// src/App.tsx (VERSIÓN CORREGIDA FINAL)
+// src/App.tsx (VERSIÓN FINAL CON AUTH Y RUTAS PROTEGIDAS - CORRECCIÓN ESLINT/TS)
 
 import React from 'react';
 import { 
     IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, IonIcon, 
-    IonLabel, IonBadge, IonApp // 🎯 AÑADIR IonApp AQUÍ
+    IonLabel, IonApp, IonSpinner, IonContent 
 } from '@ionic/react'; 
-import { Redirect, Route, useHistory } from 'react-router-dom'; 
+import { Redirect, Route, useHistory, RouteProps, RouteComponentProps } from 'react-router-dom'; // 🛑 Importar RouteProps y RouteComponentProps
 import { IonReactRouter } from '@ionic/react-router';
 
-import { ellipse, square, triangle, logOutOutline, home, person, cog } from 'ionicons/icons'; // 🎯 Añadir íconos básicos
+import { logOutOutline, triangle, ellipse, square } from 'ionicons/icons'; 
 
-// Importación de AuthProvider y useAuth 
-import { AuthProvider, useAuth } from "./context"; 
+// 🛑 Importaciones de la lógica de autenticación
+import { useAuth } from "./context/AuthDefinitions"; 
+import { AuthProvider } from './context/AuthProvider'; 
+
+// Importaciones de las guardias de rutas
+import { PrivateRoute } from './router/PrivateRoute'; 
 
 // Importaciones de páginas
 import Home from './pages/Home';
@@ -23,23 +27,92 @@ import Prueba from './pages/Prueba';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
-/* Basic CSS for apps built with Ionic */
 import '@ionic/react/css/normalize.css';
 import '@ionic/react/css/structure.css';
 import '@ionic/react/css/typography.css';
-
-/* Optional CSS utils that can be commented out */
 import '@ionic/react/css/padding.css';
-import '@ionic/react/css/float-elements.css';
-import '@ionic/react/css/text-alignment.css';
-import '@ionic/react/css/text-transformation.css';
-import '@ionic/react/css/flex-utils.css';
-import '@ionic/react/css/display.css';
-/* Theme variables */
+// ... (otras importaciones CSS) ...
 import './theme/variables.scss';
 
+// ====================================================================
+// 🛑 DEFINICIONES DE TIPOS PARA ELIMINAR EL ERROR 'any'
+// ====================================================================
 
-// Componente que muestra el ícono de logout en la barra de pestañas
+// 1. Tipo para los props que recibe la página que se renderiza (Home, Login, etc.)
+type RouteInnerComponentProps = RouteComponentProps<object>;
+
+// 2. Interfaz que define las propiedades que aceptan nuestras Guardias de Ruta
+interface GuardRouteProps extends RouteProps {
+    // El componente que se va a renderizar debe aceptar los props de ruta de v5
+    component: React.ComponentType<RouteInnerComponentProps>; 
+}
+
+
+// ====================================================================
+// A. COMPONENTE DE GUARDIA INVERSA (Solo para Rutas Públicas: Login/Register)
+// ====================================================================
+
+// 🛑 CORRECCIÓN: Usamos GuardRouteProps en lugar de 'any'
+const PublicOnlyRoute: React.FC<GuardRouteProps> = ({ component: Component, ...rest }) => {
+    const { isAuthenticated, loading } = useAuth();
+
+    return (
+        <Route
+            {...rest}
+            // 🛑 Tipamos el argumento props dentro del render
+            render={(props: RouteInnerComponentProps) => {
+                // Muestra spinner durante la carga inicial de Firebase
+                if (loading) {
+                    return (
+                        <IonContent fullscreen className="ion-padding">
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <IonSpinner name="crescent" />
+                            </div>
+                        </IonContent>
+                    );
+                }
+
+                if (isAuthenticated) {
+                    // Si está autenticado, redirige al Home (ruta con tabs)
+                    return <Redirect to="/tabs/home" />;
+                } else {
+                    // Si NO está autenticado, permite ver el componente (Login/Register)
+                    return <Component {...props} />;
+                }
+            }}
+        />
+    );
+};
+
+// ====================================================================
+// B. COMPONENTE DE REDIRECCIÓN DE RAÍZ (Controla la primera carga /)
+// ====================================================================
+
+// Determina si redirigir a /login o /tabs/home
+const AuthRedirectRoute: React.FC = () => {
+    const { isAuthenticated, loading } = useAuth();
+    
+    // Si está cargando, no redirigimos para evitar flashes (el spinner de IonApp podría ser mejor)
+    if (loading) return (
+         <Route exact path="/" render={() => (
+             <IonContent fullscreen className="ion-padding">
+                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                     <IonSpinner name="crescent" />
+                 </div>
+             </IonContent>
+         )} />
+    ); 
+
+    return (
+        <Route exact path="/">
+            <Redirect to={isAuthenticated ? "/tabs/home" : "/login"} /> 
+        </Route>
+    );
+};
+
+// ====================================================================
+// C. COMPONENTE DE LOGOUT (Tu componente original)
+// ====================================================================
 const MenuLogoutItem: React.FC = () => {
     const { logout } = useAuth();
     const history = useHistory();
@@ -47,9 +120,8 @@ const MenuLogoutItem: React.FC = () => {
     const handleLogout = () => {
         logout()
             .then(() => {
-                history.push('/login'); 
+                history.replace('/login'); // Usar replace para evitar volver al tab
             })
-            // Tipado corregido
             .catch((error: Error) => { 
                 console.error("Error al cerrar sesión:", error.message);
             });
@@ -63,40 +135,43 @@ const MenuLogoutItem: React.FC = () => {
     );
 };
 
+// ====================================================================
+// D. ESTRUCTURA PRINCIPAL DEL APP
+// ====================================================================
 
 const App: React.FC = () => (
-    // 🎯 CRÍTICO: Envuelve todo en IonApp (faltaba en tu código de App.tsx)
     <IonApp>
         <IonReactRouter>
+            {/* 🛑 Nivel 2: AuthProvider para que toda la APP tenga acceso al estado */}
             <AuthProvider>
                 
-                {/* 1. RUTAS SIN BARRA DE PESTAÑAS (Login, Register, Detalle Negocio) */}
-                <Route exact path="/login" component={Login} />
-                <Route exact path="/register" component={Register} />
+                {/* 1. RUTAS DE AUTENTICACIÓN (Guardia Inversa) */}
+                <PublicOnlyRoute exact path="/login" component={Login} />
+                <PublicOnlyRoute exact path="/register" component={Register} />
+                
+                {/* 2. RUTAS PÚBLICAS SIN TABS (Detalle de Negocio) */}
                 <Route path="/negocio/:id" component={PaginaDetalleNegocio} />
 
 
-                {/* 2. ESTRUCTURA DE PESTAÑAS */}
+                {/* 3. ESTRUCTURA DE PESTAÑAS */}
                 <IonTabs>
                     <IonRouterOutlet>
-                        {/* 🎯 CORRECCIÓN CLAVE: Todas las rutas de las pestañas deben usar el prefijo /tabs/ */}
-                        <Route exact path="/tabs/home" component={Home} />
-                        <Route exact path="/tabs/profile" component={Profile} />
-                        <Route exact path="/tabs/prueba" component={Prueba} />
-
-                        {/* Redirección dentro de tabs: /tabs -> /tabs/home */}
+                        {/* 🎯 RUTAS PRIVADAS: Usan PrivateRoute */}
+                        <PrivateRoute exact path="/tabs/home" component={Home} />
+                        <PrivateRoute exact path="/tabs/profile" component={Profile} />
+                        <PrivateRoute exact path="/tabs/prueba" component={Prueba} />
+                        
+                        {/* Redirección interna dentro de tabs */}
                         <Route exact path="/tabs">
                             <Redirect to="/tabs/home" />
                         </Route>
 
-                        {/* Redirección por defecto: / -> /tabs/home (o /login si es la página de inicio) */}
-                        <Route exact path="/">
-                             {/* Puedes cambiar '/tabs/home' por '/login' si quieres que inicie en el login */}
-                            <Redirect to="/tabs/home" /> 
-                        </Route>
+                        {/* 4. REDIRECCIÓN DE RAÍZ (/) */}
+                        <AuthRedirectRoute />
+
                     </IonRouterOutlet>
                     
-                    {/* 3. BARRA DE PESTAÑAS (DEBE APUNTAR A LAS NUEVAS RUTAS /tabs/...) */}
+                    {/* 5. BARRA DE PESTAÑAS */}
                     <IonTabBar slot="bottom">
                         <IonTabButton tab="home" href="/tabs/home">
                             <IonIcon icon={triangle} />

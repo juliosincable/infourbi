@@ -68,11 +68,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // --- MANEJADORES DE SESIÓN (Llaman al Servicio y DEVUELVEN el User) ---
 
     // Login: Debe devolver Promise<FirebaseAuthUser> para cumplir el contrato
-    const handleLogin = async (correo: string, password: string): Promise<FirebaseAuthUser> => {
+    const handleLogin = async (email: string, password: string): Promise<FirebaseAuthUser> => {
         setLoading(true);
         
         try {
-            const user = await login(correo, password); 
+            const user = await login(email, password); 
             
             setCurrentUser(user);
             await loadUserProfile(user); 
@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     // Registro: Debe devolver Promise<FirebaseAuthUser> para cumplir el contrato
-    const handleRegister = async (data: { nombre: string, correo: string, password: string, countryCode?: string }): Promise<FirebaseAuthUser> => {
+    const handleRegister = async (data: { nombre: string, email: string, password: string, countryCode?: string }): Promise<FirebaseAuthUser> => {
         setLoading(true);
 
         try {

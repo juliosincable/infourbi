@@ -15,7 +15,7 @@ export interface AuthContextType {
     // Firmas de las funciones del contexto:
     login: (correo: string, password: string) => Promise<FirebaseAuthUser>;
     logout: () => Promise<void>;
-    register: (data: { nombre: string, correo: string, password: string, countryCode?: string }) => Promise<FirebaseAuthUser>;
+    register: (data: { nombre: string, email: string, password: string, countryCode?: string }) => Promise<FirebaseAuthUser>;
 }
 
 

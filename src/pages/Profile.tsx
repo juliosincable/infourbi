@@ -62,7 +62,7 @@ const Profile: React.FC = () => {
                         <IonLabel>
                             <h2>Email</h2>
                             {/* Usamos 'correo' según tu interfaz Usuario */}
-                            <p>{currentUser.correo}</p>
+                            <p>{currentUser.email}</p>
                         </IonLabel>
                     </IonItem>
                 </>
