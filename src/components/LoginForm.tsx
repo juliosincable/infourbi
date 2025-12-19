@@ -1,148 +1,90 @@
-// Archivo: src/components/LoginForm.tsx (CORREGIDO)
-
 import React, { useState } from "react";
 import {
-    IonButton,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardContent,
-    IonLoading,
-    useIonToast,
+  IonButton, IonCard, IonCardHeader, IonTitle, IonCardContent,
+  useIonToast, IonSpinner, useIonRouter
 } from "@ionic/react";
-// Importamos el tipo FirebaseError para tipar los errores del catch
-import { FirebaseError } from "firebase/app";
+import { useAuth } from "../context/AuthProvider";
 
-// CORRECCIÓN CLAVE: Importar useAuth desde el archivo barrel (index.ts)
-// Asumimos que esta importación ya fue corregida a: import { useAuth } from "../context";
-// Si el error persiste, la ruta es: import { useAuth } from "../context";
-import { useAuth } from "../context"; 
-// Aunque el comentario decía "../context/Auth", la corrección real para el error TS2305 es "../context"
+interface FirebaseError {
+  code?: string;
+}
 
+export const LoginForm: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-const LoginForm: React.FC = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  const auth = useAuth();
+  const router = useIonRouter(); // Esto es lo que usaremos para navegar
+  const [presentToast] = useIonToast();
 
-    // Desestructuramos la función login del Context
-    const { login } = useAuth();
-    const [presentToast] = useIonToast(); // Hook para notificaciones rápidas
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      presentToast({
+        message: "Por favor, completa ambos campos",
+        duration: 3000,
+        color: "warning",
+        position: "bottom"
+      });
+      return;
+    }
 
-    // Función utilitaria para mostrar errores con Toast
-    const showErrorToast = (message: string) => {
-        presentToast({
-            message: message,
-            duration: 3000,
-            color: "danger",
-            position: "bottom",
-        });
-    };
+    setIsSubmitting(true);
+    try {
+      await auth.login(email.trim(), password);
+      console.log("¡Éxito!");
+      
+      // CAMBIO CLAVE: Navegamos sin recargar la página
+      router.push("/tabs/home", "forward", "replace");
 
-    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsSubmitting(true);
+    } catch (err) {
+      const error = err as FirebaseError;
+      presentToast({
+        message: "Error de acceso: " + (error.code || "verifique sus datos"),
+        duration: 3000,
+        color: "danger",
+        position: "bottom"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-        try {
-            // Asumimos que 'login' en el Context acepta (email, password)
-            await login(email, password); 
-            // Si el login es exitoso, AnonymousRoute redirigirá automáticamente.
-        } catch (err) {
-            let friendlyMessage = "Ocurrió un error desconocido al iniciar sesión.";
-            
-            // 1. Verificamos si es una instancia de FirebaseError
-            if (err instanceof FirebaseError) {
-                console.error("Error de inicio de sesión (Firebase):", err);
-                friendlyMessage = getFriendlyErrorMessage(err.code);
-            } 
-            // 2. Verificamos errores lanzados por el Service Layer (si son de tipo Error)
-            else if (err instanceof Error) {
-                console.error("Error de inicio de sesión (Service):", err);
-                // Usamos el mensaje del error lanzado por el Service Layer (ej: 'Credenciales inválidas')
-                friendlyMessage = err.message;
-            } 
-            
-            showErrorToast(friendlyMessage);
+  return (
+    <IonCard>
+      <IonCardHeader>
+        <IonTitle className="ion-text-center">infoUrbi</IonTitle>
+      </IonCardHeader>
+      <IonCardContent>
+        <form onSubmit={handleLogin}>
+          <div style={{ padding: '10px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', color: 'gray' }}>Correo Electrónico</label>
+            <input 
+              type="email"
+              value={email}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: '1px solid #ddd', color: 'black' }}
+              placeholder="tu@correo.com"
+            />
 
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+            <label style={{ display: 'block', marginBottom: '5px', color: 'gray' }}>Contraseña</label>
+            <input 
+              type="password"
+              value={password}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              style={{ width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: '1px solid #ddd', color: 'black' }}
+            />
+          </div>
 
-    /**
-     * Función utilitaria para traducir códigos de error de Firebase a mensajes amigables.
-     */
-    const getFriendlyErrorMessage = (errorCode: string): string => {
-        switch (errorCode) {
-            case "auth/user-not-found":
-            case "auth/wrong-password":
-                return "Credenciales incorrectas. Verifica tu email y contraseña.";
-            case "auth/invalid-email":
-                return "El formato del email es inválido.";
-            case "auth/too-many-requests":
-                return "Demasiados intentos fallidos. Inténtalo más tarde.";
-            case "auth/network-request-failed":
-                return "Error de red. Verifica tu conexión a internet.";
-            default:
-                return "Error al iniciar sesión. Por favor, revisa tus credenciales.";
-        }
-    };
-
-    return (
-        <IonCard className="ion-padding">
-            <IonCardHeader>
-                <IonCardTitle>Iniciar Sesión</IonCardTitle>
-            </IonCardHeader>
-
-            <IonCardContent>
-                <form onSubmit={handleLogin}>
-                    <IonList>
-                        <IonItem>
-                            <IonLabel position="floating">Email</IonLabel>
-                            <IonInput
-                                type="email"
-                                value={email}
-                                onIonChange={(e) => setEmail(e.detail.value!)}
-                                required
-                                disabled={isSubmitting}
-                            />
-                        </IonItem>
-
-                        <IonItem>
-                            <IonLabel position="floating">Contraseña</IonLabel>
-                            <IonInput
-                                type="password"
-                                value={password}
-                                onIonChange={(e) => setPassword(e.detail.value!)}
-                                required
-                                disabled={isSubmitting}
-                            />
-                        </IonItem>
-                    </IonList>
-
-                    <IonButton
-                        expand="block"
-                        type="submit"
-                        className="ion-margin-top"
-                        disabled={isSubmitting || !email || !password} // Deshabilitar si no hay datos
-                    >
-                        {isSubmitting ? "Iniciando..." : "Entrar"}
-                    </IonButton>
-                </form>
-
-                {/* IonLoading se usa como indicador de proceso, no es un modal bloqueante */}
-                <IonLoading
-                    isOpen={isSubmitting}
-                    message={"Autenticando..."}
-                    duration={0}
-                />
-            </IonCardContent>
-        </IonCard>
-    );
+          <IonButton expand="block" type="submit" disabled={isSubmitting} className="ion-margin-top">
+            {isSubmitting ? <IonSpinner name="crescent" /> : "ENTRAR"}
+          </IonButton>
+        </form>
+      </IonCardContent>
+    </IonCard>
+  );
 };
 
 export default LoginForm;

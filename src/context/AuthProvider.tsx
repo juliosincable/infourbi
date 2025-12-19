@@ -1,107 +1,56 @@
-// src/context/AuthProvider.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { 
     onAuthStateChanged, 
     signInWithEmailAndPassword, 
     signOut,
-    User // Tipo de usuario de Firebase
+    User,
+    createUserWithEmailAndPassword 
 } from 'firebase/auth'; 
-import { doc, getDoc, Timestamp } from 'firebase/firestore'; // Importamos Timestamp si es necesario
-
-// Importamos el contrato, el hook y el contexto desde el archivo de definiciones
-import { 
-    AuthContext, 
-    AuthContextType, 
-    defaultAuthContext, 
-} from './AuthDefinitions'; 
-// Asegúrate de que este tipo ahora incluya 'uid: string' y 'email: string'
+import { doc, getDoc, setDoc, Timestamp, Firestore } from 'firebase/firestore'; 
+import { AuthContext, AuthContextType } from './authContextTypes';
 import { Usuario } from '../types/types'; 
 import { auth, db } from '../service/firebaseConfig'; 
 
-// ----------------------------------------------------------------------
-// ✅ CORRECCIÓN TS2339 / ESLINT: Usamos React.PropsWithChildren
-// ----------------------------------------------------------------------
+interface AuthInternalState {
+    currentUser: Usuario | null;
+    userInfo: Usuario | null;
+    loading: boolean;
+    isAuthenticated: boolean;
+    db: Firestore;
+}
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     
-    // Inicializamos el estado del contexto
-    const [contextValue, setContextValue] = useState<AuthContextType>({
-        ...defaultAuthContext, 
+    const [contextState, setContextState] = useState<AuthInternalState>({ 
+        currentUser: null,
+        userInfo: null,
+        loading: true, 
+        isAuthenticated: false,
         db: db 
     });
     
-    // --- 1. FUNCIÓN CRÍTICA: Lógica de Autenticación de Firebase ---
-
-    useEffect(() => {
-        // Establecer loading en true al inicio de la verificación (solo al montar)
-        setContextValue(prev => ({ ...prev, loading: true }));
-            
-        const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
-
-            if (user) {
-                // Si el usuario está logueado, buscamos sus datos de perfil y rol en Firestore.
-                const userDocRef = doc(db, 'usuarios', user.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists()) {
-                    // 🎯 Combinar datos de Auth (uid, email) y Firestore (role, etc.)
-                    const userData = userDoc.data(); 
-                    
-                    // Manejo de email que puede ser null en Firebase
-                    const emailString = user.email || ''; 
-
-                    // ✅ CORRECCIÓN TS2353: 'uid' y 'email' ahora coinciden con la interfaz
-                    const loadedUser: Usuario = {
-                        uid: user.uid, 
-                        email: emailString, 
-                        
-                        // Asignar los campos de Firestore (requieren casting de tipo)
-                        nombre: (userData.nombre as string) || '', // Campo obligatorio de Usuario
-                        role: (userData.role as Usuario['role']) || 'user', 
-                        countryCode: (userData.countryCode as string) || 'VE',
-                        createdAt: userData.createdAt as Timestamp, 
-                        // ... otros campos obligatorios
-                    };
-
-                    setContextValue(prev => ({
-                        ...prev,
-                        currentUser: loadedUser,
-                        isAuthenticated: true,
-                        loading: false, 
-                    }));
-                } else {
-                    console.warn("Usuario autenticado sin documento de perfil en Firestore. Cerrando sesión...");
-                    signOut(auth); 
-                    setContextValue(prev => ({
-                        ...prev,
-                        currentUser: null,
-                        isAuthenticated: false,
-                        loading: false,
-                    }));
-                }
-
-            } else {
-                // Si NO hay usuario logueado
-                setContextValue(prev => ({
-                    ...prev,
-                    currentUser: null,
-                    isAuthenticated: false,
-                    loading: false, 
-                }));
-            }
-        });
-
-        // Cleanup function
-        return () => unsubscribe(); 
-        
-    // ✅ CORRECCIÓN ESLINT: Dependencias estáticas (auth, db) no son necesarias aquí.
-    }, []); 
-
-    // --- 2. Implementación de los Métodos (Login/Logout) ---
-
-    const login = useCallback(async (email: string, pass: string): Promise<void> => {
+    const login = useCallback(async (email: string, pass: string): Promise<User> => {
         try {
-            await signInWithEmailAndPassword(auth, email, pass);
+            const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+            const user = userCredential.user;
+
+            // ESTO ARREGLA EL REBOTE AL LOGIN:
+            // Actualizamos el estado de inmediato para que la app sepa que ya entramos
+            setContextState(prev => ({
+                ...prev,
+                isAuthenticated: true,
+                loading: false, 
+                currentUser: {
+                    uid: user.uid,
+                    email: user.email || '',
+                    nombre: 'Cargando...', 
+                    role: 'user',
+                    countryCode: 'VE',
+                    createdAt: Timestamp.now()
+                }
+            }));
+
+            return user;
         } catch (error) {
             console.error("Error al iniciar sesión:", error);
             throw error; 
@@ -116,12 +65,97 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             throw error;
         }
     }, []);
+
+    const register = useCallback(async (data: { 
+        nombre: string, 
+        email: string, 
+        password: string, 
+        countryCode?: string 
+    }): Promise<User> => {
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            const user = userCredential.user;
+
+            const nuevoUsuario: Usuario = {
+                uid: user.uid,
+                email: data.email,
+                nombre: data.nombre,
+                role: 'user', 
+                countryCode: data.countryCode || 'VE',
+                createdAt: Timestamp.now(),
+            };
+
+            await setDoc(doc(db, 'usuarios', user.uid), nuevoUsuario);
+            return user;
+        } catch (error) {
+            console.error("Error al registrar usuario:", error);
+            throw error;
+        }
+    }, []);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            console.log("AuthProvider: Estado de Auth cambiado", user?.email);
+            
+            try {
+                if (user) {
+                    const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+                    let userData: Usuario;
+
+                    if (userDoc.exists()) {
+                        userData = userDoc.data() as Usuario;
+                    } else {
+                        userData = {
+                            uid: user.uid,
+                            email: user.email || '',
+                            nombre: 'Usuario infoUrbi',
+                            role: 'user',
+                            countryCode: 'VE',
+                            createdAt: Timestamp.now()
+                        };
+                    }
+                    
+                    setContextState(prev => ({
+                        ...prev,
+                        currentUser: userData,
+                        isAuthenticated: true,
+                        loading: false
+                    }));
+                } else {
+                    setContextState(prev => ({
+                        ...prev,
+                        currentUser: null,
+                        isAuthenticated: false,
+                        loading: false
+                    }));
+                }
+            } catch (error) {
+                console.error("Error en AuthProvider:", error);
+                setContextState(prev => ({ ...prev, loading: false }));
+            }
+        });
+
+        const timeout = setTimeout(() => {
+            setContextState(prev => {
+                if (prev.loading) {
+                    console.warn("Forzando apagado de loading por timeout");
+                    return { ...prev, loading: false };
+                }
+                return prev;
+            });
+        }, 3000);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(timeout);
+        };
+    }, []);
     
-    // 🎯 Creamos el valor final, inyectando los métodos para el contrato
     const finalContextValue: AuthContextType = {
-        ...contextValue,
+        ...contextState,
         login,
-        logout
+        logout,
+        register,
     };
 
     return (
@@ -129,4 +163,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             {children}
         </AuthContext.Provider>
     );
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error("useAuth debe ser usado dentro de un AuthProvider");
+    }
+    return context;
 };

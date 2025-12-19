@@ -103,9 +103,9 @@ const Home = () => {
                                         <p>Verifica las reglas de seguridad de Firestore en tu consola de Firebase.</p>
                                     </IonText>
                                 )}
-
-                                <Ciudades />
-                                <Buscador />
+                                {/* <Ciudades /> */}
+                            
+                                {/* <Buscador /> */} **🛑 COMENTA ESTA LÍNEA**
                                 <Listado businesses={businesses} loading={loading} />
                                 
                             </div>

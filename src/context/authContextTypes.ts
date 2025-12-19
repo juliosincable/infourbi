@@ -1,39 +1,38 @@
-// src/context/authContextTypes.ts
+// src/context/authContextTypes.ts (VERSIÓN CORREGIDA Y FINAL)
 
 import React, { createContext, useContext } from 'react';
-import { User as FirebaseAuthUser } from 'firebase/auth';
+// import { User as FirebaseAuthUser } from 'firebase/auth'; // Ya no es necesario importar User de Firebase aquí
 import { Usuario } from '../types/types'; 
-// Asume que también tienes RegisterData aquí o donde se necesite
+import { User } from 'firebase/auth'; // Importamos User solo para la función 'register' y 'login'
+import { Firestore } from 'firebase/firestore'; 
 
-// --- 1. DEFINICIÓN DEL CONTRATO DE TIPOS ---
+// --- 1. DEFINICIÓN DEL CONTRATO DE TIPOS (INTERFAZ) ---
 export interface AuthContextType {
-    currentUser: FirebaseAuthUser | null;
-    userInfo: Usuario | null; // El perfil de segundo grado de Firestore
+    // 🛑 CORRECCIÓN CLAVE: El contexto guarda el objeto simplificado 'Usuario', NO el objeto grande de Firebase 'User'.
+    currentUser: Usuario | null; 
+    userInfo: Usuario | null; 
     loading: boolean;
     isAuthenticated: boolean;
+    db: Firestore; // Añadido para que coincida con la implementación en AuthProvider
     
     // Firmas de las funciones del contexto:
-    login: (correo: string, password: string) => Promise<FirebaseAuthUser>;
+    // Las funciones aún devuelven el tipo 'User' de Firebase, ya que es el objeto que retorna la librería.
+    login: (correo: string, password: string) => Promise<User>;
     logout: () => Promise<void>;
-    register: (data: { nombre: string, email: string, password: string, countryCode?: string }) => Promise<FirebaseAuthUser>;
+    register: (data: { nombre: string, email: string, password: string, countryCode?: string }) => Promise<User>;
 }
 
 
 // --- 2. CONTEXTO Y HOOK ---
 
-// ✅ CORRECCIÓN TS/ESLINT: El contexto debe permitir ser null en su estado inicial.
-// Ya no usamos 'any'.
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-// El hook useAuth: Garantiza que el contexto no sea null y devuelve el tipo correcto.
 export const useAuth = () => {
     const context = useContext(AuthContext); 
     
-    // Si el contexto es null, significa que el componente está fuera del AuthProvider
     if (context === null) {
         throw new Error('useAuth debe ser utilizado dentro de un AuthProvider');
     }
     
-    // Ahora TypeScript sabe que 'context' es AuthContextType
     return context;
 };
