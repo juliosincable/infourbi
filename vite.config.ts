@@ -1,24 +1,23 @@
-/// <reference types="vitest" />
-
-import legacy from '@vitejs/plugin-legacy'
-import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import legacy from '@vitejs/plugin-legacy'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Esto arregla el error de la propiedad "test"
+/// <reference types="vitest" />
+/// <reference types="vite/client" />
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     legacy(),
     VitePWA({
-      strategy: 'injectManifest',
-      
+      registerType: 'autoUpdate',
       manifest: {
         name: 'InfoUrbi',
         short_name: 'InfoUrbi',
-        description: 'An Ionic project',
-        theme_color: '#ffffff',
+        description: 'Plataforma infoUrbi',
+        theme_color: '#0077B6',
         icons: [
           {
             src: 'pwa-icon-192.png',
@@ -32,19 +31,23 @@ export default defineConfig({
           }
         ]
       }
-    }),
-
+    })
   ],
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          firebase: ['firebase/app', 'firebase/firestore'],
-        },
-      },
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) return 'vendor-fb';
+            if (id.includes('@ionic')) return 'vendor-ui';
+            return 'vendor-core';
+          }
+        }
+      }
     },
+    chunkSizeWarningLimit: 1000
   },
+  // @ts-expect-error - Vitest no está en el tipo base de Vite
   test: {
     globals: true,
     environment: 'jsdom',

@@ -5,16 +5,17 @@
     "lib": ["DOM", "DOM.Iterable", "ESNext", "webworker"],
     "allowJs": false,
     "skipLibCheck": true,
-    "esModuleInterop": true, // ¡CORREGIDO! Cambiado de 'false' a 'true'
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "bundler", // Debe ser bundler
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": ["vite/client", "vitest/globals"] // Añade esto
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
