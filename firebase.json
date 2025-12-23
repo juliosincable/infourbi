@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "infourbi",
     "public": "dist",
     "ignore": [
       "firebase.json",
