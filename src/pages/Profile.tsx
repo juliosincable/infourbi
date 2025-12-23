@@ -1,25 +1,34 @@
-// Archivo: src/pages/Profile.tsx
-
 import React from 'react';
 import { 
-  IonPage, IonHeader, IonToolbar, IonTitle, IonContent, 
-  IonButton, IonCard, IonCardContent, IonCardHeader, 
-  IonCardTitle, IonItem, IonLabel, IonIcon 
+  IonPage, 
+  IonContent, 
+  IonButton, 
+  IonCard, 
+  IonCardContent, 
+  IonCardHeader, 
+  IonCardTitle, 
+  IonItem, 
+  IonLabel, 
+  IonIcon 
 } from '@ionic/react';
-import { useAuth } from '../context/AuthDefinitions'; 
+
+// --- CAMBIO AQUÍ: Importar desde AuthProvider, NO desde AuthDefinitions ---
+import { useAuth } from '../context/AuthProvider'; 
+
 import { useHistory } from 'react-router-dom';
 import { personCircle } from 'ionicons/icons'; 
 
 const Profile: React.FC = () => {
+  // Ahora currentUser y logout vendrán del contexto real de Firebase
   const { currentUser, logout } = useAuth();
   const history = useHistory();
 
   const handleLogout = async () => {
     try {
       await logout();
-      // Redirige al usuario a la página de login o a la home page después del logout
+      // El estado cambiará a isAuthenticated: false y App.tsx hará el resto
       history.push('/login');
-      console.log('Usuario ha cerrado sesión');
+      console.log('Usuario ha cerrado sesión en infoUrbi');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
@@ -27,54 +36,48 @@ const Profile: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Perfil de Usuario</IonTitle>
-        </IonToolbar>
-      </IonHeader>
       <IonContent className="ion-padding">
-        <IonCard>
+        <IonCard mode="ios">
           <IonCardHeader>
-            <IonCardTitle>Información del Usuario</IonCardTitle>
+            <IonCardTitle style={{ textAlign: 'center' }}>Mi Perfil</IonCardTitle>
           </IonCardHeader>
+          
           <IonCardContent>
             {currentUser ? (
                 <>
-                    {/* Icono de Avatar Centrado */}
                     <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                         <IonIcon 
                             icon={personCircle} 
-                            style={{ fontSize: '80px', color: '#6c757d' }} 
+                            style={{ fontSize: '90px', color: '#a2a2a2' }} 
                         />
                     </div>
 
-                    {/* 🟢 Información del Nombre */}
-                    <IonItem lines="none">
+                    <IonItem lines="full">
                         <IonLabel>
-                            <h2>Nombre</h2>
-                            {/* Usamos 'nombre' según tu interfaz Usuario */}
-                            <p>{currentUser.nombre || 'Nombre no disponible'}</p>
+                            <h2 style={{ fontWeight: 'bold' }}>Nombre</h2>
+                            <p>{currentUser.nombre || 'Sin nombre configurado'}</p>
                         </IonLabel>
                     </IonItem>
                     
-                    {/* 🟢 Información del Email (Corregido a 'correo' según la interfaz) */}
                     <IonItem lines="none">
                         <IonLabel>
-                            <h2>Email</h2>
-                            {/* Usamos 'correo' según tu interfaz Usuario */}
+                            <h2 style={{ fontWeight: 'bold' }}>Correo Electrónico</h2>
                             <p>{currentUser.email}</p>
                         </IonLabel>
                     </IonItem>
                 </>
             ) : (
-              <p>No hay información del usuario disponible.</p>
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <p>Cargando información del usuario...</p>
+              </div>
             )}
 
             <IonButton 
                 expand="block" 
                 onClick={handleLogout} 
                 color="danger" 
-                style={{ marginTop: '30px' }}
+                shape="round"
+                style={{ marginTop: '40px' }}
             >
               Cerrar Sesión
             </IonButton>

@@ -1,14 +1,10 @@
-// Archivo: src/service/firebaseConfig.ts (VERSIÓN CORREGIDA FINAL)
+// Archivo: src/service/firebaseConfig.ts (CON PERSISTENCIA ACTIVA)
 
-// Importaciones de las funciones del SDK de Firebase
 import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore'; // <-- CORRECCIÓN: Importar getFirestore
-import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore'; 
+import { getAuth, Auth, setPersistence, browserLocalPersistence } from 'firebase/auth'; // <-- Añade estas importaciones
 
-// --- CONFIGURACIÓN PARA VITE ---
-// Usamos import.meta.env para acceder a las variables de entorno en el navegador.
 const firebaseConfig = {
-    // Las claves deben coincidir con el prefijo VITE_ de tu .env
     apiKey: import.meta.env.VITE_API_KEY, 
     authDomain: import.meta.env.VITE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_PROJECT_ID,
@@ -21,9 +17,12 @@ const firebaseConfig = {
 // 1. Inicializar Firebase
 export const app: FirebaseApp = initializeApp(firebaseConfig);
 
-// 2. Inicializar servicios y exportarlos (CORRECCIÓN: Se eliminó la importación incorrecta de la línea 2)
-export const db: Firestore = getFirestore(app); // <-- Función getFirestore ahora disponible
+// 2. Inicializar servicios
+export const db: Firestore = getFirestore(app);
 export const auth: Auth = getAuth(app);
 
-// Exportación por defecto opcional
-// export default app;
+// 3. Configurar persistencia explícita (ESTO ARREGLA EL RETRASO AL RECARGAR)
+setPersistence(auth, browserLocalPersistence)
+  .catch((error) => {
+    console.error("Error en persistencia Firebase:", error);
+  });

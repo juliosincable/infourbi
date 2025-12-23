@@ -32,25 +32,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     const login = useCallback(async (email: string, pass: string): Promise<User> => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-            const user = userCredential.user;
-
-            // ESTO ARREGLA EL REBOTE AL LOGIN:
-            // Actualizamos el estado de inmediato para que la app sepa que ya entramos
-            setContextState(prev => ({
-                ...prev,
-                isAuthenticated: true,
-                loading: false, 
-                currentUser: {
-                    uid: user.uid,
-                    email: user.email || '',
-                    nombre: 'Cargando...', 
-                    role: 'user',
-                    countryCode: 'VE',
-                    createdAt: Timestamp.now()
-                }
-            }));
-
-            return user;
+            return userCredential.user;
         } catch (error) {
             console.error("Error al iniciar sesión:", error);
             throw error; 
@@ -94,9 +76,20 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     }, []);
 
     useEffect(() => {
+        // 1. Iniciamos el detector de tiempo muerto (Failsafe)
+        // Se usa const directamente para evitar el error 'prefer-const'
+        const timeoutId = setTimeout(() => {
+            setContextState(prev => {
+                if (prev.loading) {
+                    console.warn("AuthProvider: Timeout alcanzado. Forzando renderizado.");
+                    return { ...prev, loading: false };
+                }
+                return prev;
+            });
+        }, 15000);
+
+        // 2. Escuchamos el cambio de estado de Firebase
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            console.log("AuthProvider: Estado de Auth cambiado", user?.email);
-            
             try {
                 if (user) {
                     const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
@@ -115,6 +108,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                         };
                     }
                     
+                    // Si Firebase responde, el timeout se limpia aquí
+                    clearTimeout(timeoutId);
                     setContextState(prev => ({
                         ...prev,
                         currentUser: userData,
@@ -122,6 +117,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                         loading: false
                     }));
                 } else {
+                    clearTimeout(timeoutId);
                     setContextState(prev => ({
                         ...prev,
                         currentUser: null,
@@ -130,24 +126,15 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
                     }));
                 }
             } catch (error) {
-                console.error("Error en AuthProvider:", error);
+                console.error("Error en AuthProvider useEffect:", error);
+                clearTimeout(timeoutId);
                 setContextState(prev => ({ ...prev, loading: false }));
             }
         });
 
-        const timeout = setTimeout(() => {
-            setContextState(prev => {
-                if (prev.loading) {
-                    console.warn("Forzando apagado de loading por timeout");
-                    return { ...prev, loading: false };
-                }
-                return prev;
-            });
-        }, 3000);
-
         return () => {
             unsubscribe();
-            clearTimeout(timeout);
+            clearTimeout(timeoutId);
         };
     }, []);
     
@@ -165,6 +152,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     );
 };
 
+// Se añade esta línea para silenciar la advertencia de Fast Refresh de Vite
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = useContext(AuthContext);

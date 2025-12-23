@@ -23,7 +23,7 @@
   --ion-color-tertiary-shade: #7fcae2;
   --ion-color-tertiary-tint: #9ae8f3;
 
-  /* Colores de feedback (no incluidos en tu paleta, se mantienen por defecto) */
+  /* Colores de feedback */
   --ion-color-success: #2ecc71;
   --ion-color-success-rgb: 46, 204, 113;
   --ion-color-success-contrast: #ffffff;
@@ -67,19 +67,26 @@
   --ion-color-light-shade: #b2d5d8;
   --ion-color-light-tint: #cbe3e8;
 
-  /* Variables adicionales de tu código original */
+  /* Variables UI y Layout */
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   --box-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.15);
   --ion-background-color: #f4f5f8;
   --ion-color-step-600: #666666;
   --ion-color-step-900: #111111;
+
+  /* 📏 AJUSTE INFOURBI: Altura de la TopBar Global */
+  --infourbi-topbar-height: 56px; 
+}
+
+/* Ajuste de altura para iOS */
+.ios {
+  --infourbi-topbar-height: 44px;
 }
 
 /*
  * Dark Colors
  * -------------------------------------------
  */
-
 body.ion-palette-dark {
   --ion-color-primary: #4fb3e0;
   --ion-color-primary-rgb: 79, 179, 224;
@@ -110,17 +117,11 @@ body.ion-palette-dark {
   --ion-color-medium: #98d7e2;
   --ion-color-light: #03045E;
 
-  /*
-   * Dark Theme UI color variables
-   */
   --ion-background-color: #0d1117;
   --ion-background-color-rgb: 13, 17, 23;
-
   --ion-text-color: #c9d1d9;
   --ion-text-color-rgb: 201, 209, 217;
-
   --ion-border-color: #30363d;
-
   --ion-item-background: #161b22;
   --ion-toolbar-background: #161b22;
   --ion-tab-bar-background: #161b22;
@@ -129,22 +130,28 @@ body.ion-palette-dark {
   --box-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
-/* 🛑 SOLUCIÓN CRÍTICA: Fuerza la visibilidad de los botones del menú 🛑 */
+/* 🛑 SOLUCIÓN CRÍTICA: Contenido que no se muerde 🛑 */
+.content-with-topbar {
+  /* Empuja el contenido hacia abajo usando la variable interna de Ionic */
+  --offset-top: var(--infourbi-topbar-height) !important;
+  
+  /* Respeta el notch de los teléfonos modernos */
+  padding-top: env(safe-area-inset-top);
+}
+
 ion-toolbar {
-  --padding-start: 4px; /* Asegura espacio si el botón está a la izquierda */
-  --padding-end: 4px;   /* Asegura espacio si el botón está a la derecha */
+  --padding-start: 4px;
+  --padding-end: 4px;
 }
 
-/* Fuerza al botón a aparecer en el toolbar */
 ion-toolbar ion-menu-toggle {
-    display: block !important;
-    visibility: visible !important;
-    contain: layout; 
+  display: block !important;
+  visibility: visible !important;
+  contain: layout; 
 }
 
-/* Asegura que el IonButton dentro del IonMenuToggle también sea visible */
 ion-toolbar ion-menu-toggle ion-button {
-    --padding-start: 8px; 
-    --padding-end: 8px;
-    visibility: visible !important;
+  --padding-start: 8px; 
+  --padding-end: 8px;
+  visibility: visible !important;
 }

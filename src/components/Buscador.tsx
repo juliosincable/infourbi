@@ -1,26 +1,28 @@
-import { FC } from "react"; 
+import React, { FC } from "react"; 
+import { IonSearchbar, IonButton, IonItem, IonLabel } from '@ionic/react';
 
 const Buscador: FC = () => { 
   return (
     <div style={{
       padding: '10px', 
       margin: '16px auto', 
-      maxWidth: '600px', 
-      display: 'flex', 
-      gap: '10px', 
-      alignItems: 'center',
-      backgroundColor: '#f9f9f9'
+      maxWidth: '600px',
+      backgroundColor: '#f9f9f9',
+      borderRadius: '8px'
     }}>
-      <div> 
-        <label htmlFor="nombre-usuario">Buscar:</label>
-        <input
-          type="text"
-          id="nombre-usuario"
-          placeholder="ej. Panadería"
-          style={{ padding: '8px', border: '1px solid #ccc' }}
+      <IonItem lines="none" style={{ '--background': 'transparent' }}>
+        <IonLabel position="stacked">Buscar en infoUrbi:</IonLabel>
+        <IonSearchbar 
+          placeholder="ej. Panadería, Farmacia..." 
+          animated={true}
+          showClearButton="always"
         />
+      </IonItem>
+      <div style={{ padding: '0 16px' }}>
+        <IonButton expand="block" size="small">
+          Buscar (Firestore)
+        </IonButton>
       </div>
-      <button style={{ padding: '8px' }}>Buscar (HTML)</button>
     </div>
   );
 };
