@@ -3,17 +3,20 @@ import { IonApp, IonRouterOutlet, setupIonicReact, IonSpinner } from '@ionic/rea
 import { IonReactRouter } from '@ionic/react-router';
 import { Route, Redirect, Switch } from 'react-router-dom';
 
-import { AuthProvider, useAuth } from "./context/AuthProvider"; // ASEGÚRATE QUE ESTA RUTA ES CORRECTA
+import { AuthProvider, useAuth } from "./context/AuthProvider"; 
 import HomeTabs from './components/HomeTabs'; 
 import Login from './pages/Login';
 import Register from './pages/Register';
+
+/* Core CSS required for Ionic components to work properly */
+import '@ionic/react/css/core.css';
 
 setupIonicReact();
 
 const AppInternal: React.FC = () => {
     const { isAuthenticated, loading } = useAuth();
 
-    // 1. Mientras Firebase responde, mostramos carga
+    // 1. Si está cargando, retornamos el spinner envuelto en IonApp para que se vea
     if (loading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f4f4f4' }}>
@@ -26,42 +29,36 @@ const AppInternal: React.FC = () => {
     }
 
     return (
-        <IonRouterOutlet>
-            <Switch>
-                {/* RUTA DE LOGIN: Si ya está autenticado, lo mandamos directo a /tabs/home */}
-                <Route exact path="/login">
-                    {isAuthenticated ? <Redirect to="/tabs/home" /> : <Login />}
-                </Route>
+        <IonReactRouter>
+            <IonRouterOutlet>
+                <Switch>
+                    <Route exact path="/login">
+                        {isAuthenticated ? <Redirect to="/tabs/home" /> : <Login />}
+                    </Route>
 
-                <Route exact path="/register">
-                    {isAuthenticated ? <Redirect to="/tabs/home" /> : <Register />}
-                </Route>
+                    <Route exact path="/register">
+                        {isAuthenticated ? <Redirect to="/tabs/home" /> : <Register />}
+                    </Route>
 
-                {/* RUTA DE TABS: Aquí es donde te expulsaba. 
-                    Si por algún error de código isAuthenticated es false pero acabas de loguearte, 
-                    vamos a darle una oportunidad de cargar. */}
-                <Route path="/tabs">
-                   <HomeTabs />
-                </Route>
+                    <Route path="/tabs">
+                        <HomeTabs />
+                    </Route>
 
-                {/* REDIRECCIÓN MAESTRA */}
-                <Route exact path="/">
-                    {isAuthenticated ? <Redirect to="/tabs/home" /> : <Redirect to="/login" />}
-                </Route>
+                    <Route exact path="/">
+                        {isAuthenticated ? <Redirect to="/tabs/home" /> : <Redirect to="/login" />}
+                    </Route>
 
-                {/* FALLBACK: Si se pierde, al login */}
-                <Route render={() => <Redirect to="/login" />} />
-            </Switch>
-        </IonRouterOutlet>
+                    <Route render={() => <Redirect to="/login" />} />
+                </Switch>
+            </IonRouterOutlet>
+        </IonReactRouter>
     );
 };
 
 const App: React.FC = () => (
     <IonApp>
         <AuthProvider>
-            <IonReactRouter>
-                <AppInternal />
-            </IonReactRouter>
+            <AppInternal />
         </AuthProvider>
     </IonApp>
 );
